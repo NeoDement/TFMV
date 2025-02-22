@@ -1,0 +1,5 @@
+"result"
+{
+	"status"	"1"
+	"items_game_url"	"http://media.steampowered.com/apps/440/scripts/items/items_game.9dbd65502a54d05c6dae18656408bbeae51b24b4.txt"
+}
