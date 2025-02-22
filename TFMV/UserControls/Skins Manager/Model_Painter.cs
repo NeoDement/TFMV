@@ -98,7 +98,7 @@ namespace TFMV.UserControls
                     if (File.Exists(main_skins_backups[i]))
                     {
                         File.Copy(paint_dir + main_skins_backups[i], paint_dir + main_skins[i], true);
-                    } 
+                    }
                 }
             }
 
@@ -187,107 +187,107 @@ namespace TFMV.UserControls
         }
 
         public void switch_Skin(int in_skin_num)
-        {           
-           byte vmt_num = 0; // index for VMT_painter (4 VMTs per VMT_Painter)
+        {
+            byte vmt_num = 0; // index for VMT_painter (4 VMTs per VMT_Painter)
 
-           // override skins for red/blu
-           if ((skin_red_override != 0) && (skin_blu_override != 1) )
-           {
-               if ((skin_override_all == 255))
-               { 
-                   if (in_skin_num == 0) { in_skin_num = skin_red_override; }
-                   if (in_skin_num == 1) { in_skin_num = skin_blu_override; }
-               }
-           }
+            // override skins for red/blu
+            if ((skin_red_override != 0) && (skin_blu_override != 1))
+            {
+                if ((skin_override_all == 255))
+                {
+                    if (in_skin_num == 0) { in_skin_num = skin_red_override; }
+                    if (in_skin_num == 1) { in_skin_num = skin_blu_override; }
+                }
+            }
 
             // override all team skins
-           if (skin_override_all != 255)
-           {
-               in_skin_num = skin_override_all;
-           }
+            if (skin_override_all != 255)
+            {
+                in_skin_num = skin_override_all;
+            }
 
             //for selected VMT style
-           foreach (var vmtPainter in this.Controls.OfType<VMT_Painter>())
-           {
-               vmtPainter.label_vmt_name.Text = "";
-               vmtPainter.vmt_path = "";
+            foreach (var vmtPainter in this.Controls.OfType<VMT_Painter>())
+            {
+                vmtPainter.label_vmt_name.Text = "";
+                vmtPainter.vmt_path = "";
 
-               //loop through selected skin(in_skin_num) and add VMT editor
-               //from TF folder or from the VPKs
-               int max_skins = 4;
+                //loop through selected skin(in_skin_num) and add VMT editor
+                //from TF folder or from the VPKs
+                int max_skins = 4;
 
-               // if skin number higher than number of skins, set it to last skin
-               if (in_skin_num >= skins.Count) { in_skin_num = skins.Count - 1; }
+                // if skin number higher than number of skins, set it to last skin
+                if (in_skin_num >= skins.Count) { in_skin_num = skins.Count - 1; }
 
-               vmtPainter.vmt_path = skins[in_skin_num][vmt_num];
+                vmtPainter.vmt_path = skins[in_skin_num][vmt_num];
 
-               vmtPainter.label_vmt_name.Text = Path.GetFileName(skins[in_skin_num][vmt_num]);
-               vmtPainter.label_vmt_name.Tag = paint_dir + skins[in_skin_num][vmt_num];
-               vmtPainter.label_vmt_name.Click += new EventHandler(vmt_textEdit);
+                vmtPainter.label_vmt_name.Text = Path.GetFileName(skins[in_skin_num][vmt_num]);
+                vmtPainter.label_vmt_name.Tag = paint_dir + skins[in_skin_num][vmt_num];
+                vmtPainter.label_vmt_name.Click += new EventHandler(vmt_textEdit);
 
-               max_skins -= 1;
+                max_skins -= 1;
 
-               bool is_paintable = false;
-               is_paintable = VMT.check_paintability(paint_dir + vmtPainter.vmt_path);
+                bool is_paintable = false;
+                is_paintable = VMT.check_paintability(paint_dir + vmtPainter.vmt_path);
 
-               // if its  skin0
-               if (vmtPainter.vmt_path == main_skins[vmt_num])
-               {
-                   if (File.Exists(paint_dir + main_skins_backups[vmt_num]))
-                   {
-                       File.Copy(paint_dir + main_skins_backups[vmt_num], paint_dir + main_skins[vmt_num], true);
-                       is_paintable = VMT.check_paintability(paint_dir + vmtPainter.vmt_path);
-                   }
-               }
+                // if its  skin0
+                if (vmtPainter.vmt_path == main_skins[vmt_num])
+                {
+                    if (File.Exists(paint_dir + main_skins_backups[vmt_num]))
+                    {
+                        File.Copy(paint_dir + main_skins_backups[vmt_num], paint_dir + main_skins[vmt_num], true);
+                        is_paintable = VMT.check_paintability(paint_dir + vmtPainter.vmt_path);
+                    }
+                }
 
-               // if its not skin0
-               if (vmtPainter.vmt_path != main_skins[vmt_num])
-               {
-                   if (File.Exists(paint_dir + vmtPainter.vmt_path))
-                   {
-                       File.Copy(paint_dir + vmtPainter.vmt_path, paint_dir + main_skins[vmt_num], true);
-                       is_paintable = VMT.check_paintability(paint_dir + main_skins[vmt_num]);
-                   }
-               }
+                // if its not skin0
+                if (vmtPainter.vmt_path != main_skins[vmt_num])
+                {
+                    if (File.Exists(paint_dir + vmtPainter.vmt_path))
+                    {
+                        File.Copy(paint_dir + vmtPainter.vmt_path, paint_dir + main_skins[vmt_num], true);
+                        is_paintable = VMT.check_paintability(paint_dir + main_skins[vmt_num]);
+                    }
+                }
 
-               // set base color
-               if ((vmtPainter.color_picker.Enabled) && (vmtPainter.color_picker.SelectedIndex > 0))
-               { 
-                   if (is_paintable)
-                   {
-                       string colorbase = VMT.get_colorbase(paint_dir + vmtPainter.vmt_path);
-                       vmtPainter.color_picker.EditPaint("VMT ColorTint Base:" + colorbase);
-                   }
-               }
+                // set base color
+                if ((vmtPainter.color_picker.Enabled) && (vmtPainter.color_picker.SelectedIndex > 0))
+                {
+                    if (is_paintable)
+                    {
+                        string colorbase = VMT.get_colorbase(paint_dir + vmtPainter.vmt_path);
+                        vmtPainter.color_picker.EditPaint("VMT ColorTint Base:" + colorbase);
+                    }
+                }
 
-               //if color picker is enabled (is paintable) and selected paint is not colorbase
-               if ((vmtPainter.color_picker.Enabled) && (vmtPainter.color_picker.SelectedIndex > 0))
-               {
-                   Color c = vmtPainter.color_picker.SelectedItem.Color;
-                   VMT.set_color2(paint_dir + main_skins[0], c.R.ToString() + " " + c.G.ToString() + " " + c.B.ToString());
-               }
-               else
-               {
-                   if (is_paintable)
-                   {
-                       vmtPainter.color_picker.enabled(true);
-                       string colorbase = VMT.get_colorbase(paint_dir + vmtPainter.vmt_path);
-                       VMT.set_color2(paint_dir + main_skins[vmt_num], colorbase);
-                       vmtPainter.color_picker.EditPaint("VMT ColorTint Base:" + colorbase);
+                //if color picker is enabled (is paintable) and selected paint is not colorbase
+                if ((vmtPainter.color_picker.Enabled) && (vmtPainter.color_picker.SelectedIndex > 0))
+                {
+                    Color c = vmtPainter.color_picker.SelectedItem.Color;
+                    VMT.set_color2(paint_dir + main_skins[0], c.R.ToString() + " " + c.G.ToString() + " " + c.B.ToString());
+                }
+                else
+                {
+                    if (is_paintable)
+                    {
+                        vmtPainter.color_picker.enabled(true);
+                        string colorbase = VMT.get_colorbase(paint_dir + vmtPainter.vmt_path);
+                        VMT.set_color2(paint_dir + main_skins[vmt_num], colorbase);
+                        vmtPainter.color_picker.EditPaint("VMT ColorTint Base:" + colorbase);
 
-                       vmtPainter.color_picker.Refresh();
-                   }
-                   else
-                   {
-                       //vmtPainter.BackColor = Color.DarkGray;
-                       vmtPainter.color_picker.EditPaint("Not paintable");
-                       vmtPainter.color_picker.enabled(false);
-                       vmtPainter.color_picker.Refresh();
-                   }
-               }
+                        vmtPainter.color_picker.Refresh();
+                    }
+                    else
+                    {
+                        //vmtPainter.BackColor = Color.DarkGray;
+                        vmtPainter.color_picker.EditPaint("Not paintable");
+                        vmtPainter.color_picker.enabled(false);
+                        vmtPainter.color_picker.Refresh();
+                    }
+                }
 
-               vmt_num++;
-           }
+                vmt_num++;
+            }
         }
 
         // if material_name_skin0.vmt copy exists, rewrite material_name.vmt as (the original skin) material_name_skin0.vmt
@@ -312,7 +312,7 @@ namespace TFMV.UserControls
 
             if (!TFMV.Main.auto_refresh_paints) { return; }
             // do not update if "paint all" or "team skin switch" is doing it so we don't unecesarily rewrite the vmt multiple times
-            if (TFMV.Main.auto_refresh_busy) { return; } 
+            if (TFMV.Main.auto_refresh_busy) { return; }
 
             PaintColorPicker cp = (PaintColorPicker)sender;
             VMT_Painter vmt = (VMT_Painter)cp.Parent;
@@ -334,7 +334,7 @@ namespace TFMV.UserControls
                 }
                 else
                 {
-                   // MessageBox.Show("Error: could not find material: " + paint_dir + vmt.vmt_path);
+                    // MessageBox.Show("Error: could not find material: " + paint_dir + vmt.vmt_path);
                 }
             }
 
@@ -380,27 +380,27 @@ namespace TFMV.UserControls
             foreach (var vmt in this.Controls.OfType<VMT_Painter>())
             {
                 // copy selected VMT skin style as skin0
-               // if (vmt.cb_use_style.Checked)
-                
+                // if (vmt.cb_use_style.Checked)
+
                 // if selecting VMT skin = 0, 
                 // retstore original VMT skin
                 if (vmt.vmt_path == main_skins[vmt_num])
                 {
-                        if (File.Exists(paint_dir + main_skins_backups[vmt_num]))
-                        {
-                            File.Copy(paint_dir + main_skins_backups[vmt_num], paint_dir + vmt.vmt_path, true);
-                        }
+                    if (File.Exists(paint_dir + main_skins_backups[vmt_num]))
+                    {
+                        File.Copy(paint_dir + main_skins_backups[vmt_num], paint_dir + vmt.vmt_path, true);
+                    }
                 }
 
                 //make sure we aren't copying the same file (in the case where its the VMT0)
                 if (vmt.vmt_path != main_skins[vmt_num])
                 {
-                        if (File.Exists(paint_dir + vmt.vmt_path))
-                        {
-                            File.Copy(paint_dir + vmt.vmt_path, paint_dir + main_skins[vmt_num], true);
-                        } else{
-                          //  MessageBox.Show("Error: could not find material: " + paint_dir + vmt.vmt_path);
-                        }
+                    if (File.Exists(paint_dir + vmt.vmt_path))
+                    {
+                        File.Copy(paint_dir + vmt.vmt_path, paint_dir + main_skins[vmt_num], true);
+                    } else {
+                        //  MessageBox.Show("Error: could not find material: " + paint_dir + vmt.vmt_path);
+                    }
                 }
 
                 bool paintable = vmt.color_picker.Text.ToLower().Contains("not paintable");
@@ -437,18 +437,119 @@ namespace TFMV.UserControls
 
         private void btn_editJigglebones_Click(object sender, EventArgs e)
         {
+
+            Main main_form = (Main)ParentForm;
+
+            if (main_form.cb_disable_jigglebones.Checked)
+            {
+                MessageBox.Show("Jiggle bones cannot be edited while jiggle bones are disabled.\n\nYou can re-enable them in the Advanced Settings.");
+                return;
+            }
+
+     
             TFMV.UserControls.Jigglebone_Editor.AddJiggleBone jiggleForm = new TFMV.UserControls.Jigglebone_Editor.AddJiggleBone();
 
-            //this seems like it could be prone to breakage but it's fine for now.
-            //ParentForm.Enabled = false;
+
+            //disable all controls on the main popup (so this feels like a showdialog type window, but without causing the main tfmv window to also get pushed in front of the hlmv window)
+            ParentForm.Enabled = false;
+            jiggleForm.Main_Form = ParentForm;
 
             //set up the jigglebone editor so it knows what mdl it's pointing at
             jiggleForm.mdlpath = mdlpath;
-            jiggleForm.readJigglebones();
 
 
-            //            jiggleForm.ShowDialog();
+            //todo: create a nasty copy of the unmodified mdl data to be restored later
+            //byte[] orig_mdl_data = File.ReadAllBytes(TFMV.Main.tmp_dir + mdlpath);
+            //File.WriteAllBytes(TFMV.Main.tmp_dir + mdlpath + "_original_jigglebone_data", orig_mdl_data);
+
+            File.Copy(TFMV.Main.tmp_dir + mdlpath, TFMV.Main.tmp_dir + mdlpath + "_original_jigglebone_data", true);
+            jiggleForm.original_mdlpath = mdlpath + "_original_jigglebone_data";
+
+
+
+            jiggleForm.readJigglebones(mdlpath);
+
         }
 
+        private void Model_Painter_Load(object sender, EventArgs e)
+        {
+            Main main_form = (Main)ParentForm;
+
+            //button should only be visible on models with valid jiggelbones
+            if (mdl_has_jigglebones(mdlpath))
+            {
+                btn_editJigglebones.Visible = true;
+            }
+            else
+            {
+                btn_editJigglebones.Visible = false;
+                return;
+            }
+            
+
+
+            //todo: fix this better
+            
+            //if jigglebones are disabled, disable the button and add a tooltip explaining why!
+            if (main_form.cb_disable_jigglebones.Checked)
+            {
+                btn_editJigglebones.Enabled = false;
+                toolTip1.SetToolTip(btn_editJigglebones, "Jiggle bones cannot be edited while jiggle bones are disabled. You can re-enable them in the Advanced Settings.");
+            }
+            
+        }
+
+
+        //this function is used to check if a model has jigglebones, returns true or false
+        private bool mdl_has_jigglebones(string mdlpath)
+        {
+
+            string filepath = TFMV.Main.tmp_dir + mdlpath;
+
+            if (!File.Exists(filepath)) { return false; }
+
+            try
+            {
+
+                byte[] mdl_data = File.ReadAllBytes(filepath);
+
+                //156 is the offset to the bone count
+                int bone_count = BitConverter.ToInt32(mdl_data, 156);
+
+                //MessageBox.Show("how many bones? this many: " + bone_count);
+
+                //neodement: 160 is the offset to the first bone in the bone data (seems to always be 664)
+                int bone_offset = BitConverter.ToInt32(mdl_data, 160);
+
+
+                //iterate over each bone
+                for (int i = 1; i <= bone_count; i++)
+
+                {
+
+                    //check if it's a jigglebone or not
+                    //the 164th byte is the procedural bone type.
+
+                    byte bone_type = mdl_data[bone_offset + 164];
+
+                    //if bone type is jigglebone (05), return true, coz we found a jigglebone
+                    if (bone_type == 0x05)
+                    {
+                        return true;
+                    }
+
+
+                    //each bone is 216 bytes long. jump to the next bone.
+                    bone_offset += 216;
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
+
 }

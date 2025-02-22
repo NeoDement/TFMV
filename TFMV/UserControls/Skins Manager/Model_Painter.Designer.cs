@@ -35,10 +35,10 @@
             this.cb_lock_skin = new System.Windows.Forms.CheckBox();
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.panel2 = new System.Windows.Forms.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
             this.btn_editJigglebones = new System.Windows.Forms.Button();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.panel_header.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.panel1.SuspendLayout();
@@ -157,6 +157,7 @@
             this.ForeColor = System.Drawing.Color.Silver;
             this.Name = "Model_Painter";
             this.Size = new System.Drawing.Size(875, 90);
+            this.Load += new System.EventHandler(this.Model_Painter_Load);
             this.panel_header.ResumeLayout(false);
             this.panel_header.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
@@ -172,10 +173,10 @@
         public System.Windows.Forms.CheckBox cb_lock_skin;
         public System.Windows.Forms.PictureBox pictureBox;
         private System.Windows.Forms.Panel panel1;
-        public System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.Button btn_editJigglebones;
         public System.Windows.Forms.Label txt_mdlpath;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }
