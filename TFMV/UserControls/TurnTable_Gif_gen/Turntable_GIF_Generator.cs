@@ -11,6 +11,7 @@ using AnimatedGif;
 using TFMV.Functions;
 using System.IO;
 using System.Collections.Generic;
+//using System.Windows.Controls;
 
 namespace TFMV.UserControls
 {
@@ -103,11 +104,11 @@ namespace TFMV.UserControls
         Process proc_HLMV;
         string screemshots_dir;
 
-        public Turntable_GIF_Generator(Process p, string screenshots_dir)
+        public Turntable_GIF_Generator(string screenshots_dir)
         {
             InitializeComponent();
 
-            proc_HLMV = p;
+            proc_HLMV = Main.proc_HLMV;
             screemshots_dir = screenshots_dir;
         }
 
@@ -123,7 +124,7 @@ namespace TFMV.UserControls
 
             if(!Main.Process_IsRunning(proc_HLMV))
             {
-              System.Windows.MessageBox.Show("Could not run task, HLMV is closed.");
+                System.Windows.MessageBox.Show("Could not run task, HLMV is closed.");
                 return;
             }
 
@@ -643,9 +644,21 @@ namespace TFMV.UserControls
             txtb_move_x_factor.Value = 7;
         }
 
-        //todo: idk
+        //todo: idk if the wording is correct on the error message?
         private void btnOpenOutputFolder_Click(object sender, EventArgs e)
         {
+            if (!Directory.Exists(screemshots_dir))
+            {
+                System.Windows.MessageBox.Show("Error: the screenshots directory is not set, define it in the settings.");
+                //tabControl.BeginInvoke((Action)(() => tabControl.SelectedIndex = 1));
+                return;
+            }
+            else
+            {
+                Process.Start(screemshots_dir);
+            }
+
+            /*
             if (!Directory.Exists(screemshots_dir))
             {
                 try
@@ -663,6 +676,9 @@ namespace TFMV.UserControls
             {
                 Process.Start(screemshots_dir);
             }
+            */
+
+
         }
 
         private void lstOutputFormat_SelectedIndexChanged(object sender, EventArgs e)
