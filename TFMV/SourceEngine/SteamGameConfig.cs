@@ -329,7 +329,7 @@ namespace TFMV.SourceEngine
                 MessageBox.Show("Error saving settings! " + excep.Message);
             }
 
-            Main.tfmv_dir = (tf_dir + "custom\\TFMV\\").Replace("\\\\", "\\");
+            Main.tfmv_dir = (tf_dir + Main.tfmv_dir_short).Replace("\\\\", "\\");
             VPK.set_tf_paths(tf_dir, tf2_dir);
 
         }
@@ -387,14 +387,14 @@ namespace TFMV.SourceEngine
                 save_game_config();
 
                 //sett_tf_dir(string tf_path);
-                Main.tfmv_dir = (tf_dir + "custom\\TFMV\\").Replace("\\\\", "\\");
+                Main.tfmv_dir = (tf_dir + Main.tfmv_dir_short).Replace("\\\\", "\\");
                 VPK.set_tf_paths(tf_dir, tf2_dir);
 
             }
             else
             {
                 //sett_tf_dir(string tf_path);
-                Main.tfmv_dir = (tf_dir + "custom\\TFMV\\").Replace("\\\\", "\\");
+                Main.tfmv_dir = (tf_dir + Main.tfmv_dir_short).Replace("\\\\", "\\");
                 VPK.set_tf_paths(tf_dir, tf2_dir);
 
                 valid_config = true;
