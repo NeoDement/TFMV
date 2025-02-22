@@ -27,7 +27,7 @@ namespace TFMV.UserControls
 
         #endregion
 
-        #region numeirc updown value changes delay timers
+        #region numeric updown value changes delay timers
         // timer for when numericUpdown values are changed by user, so we only get the new value once the user is done typing
         // or using the up/down buttons, so we also do not spam the HLMV refresh and VMT file editing
 
