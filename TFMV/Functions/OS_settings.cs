@@ -11,6 +11,7 @@ namespace TFMV.Functions
         Point4 win_7_hlmv_padding = new Point4(18, 8, 50, 300);
         Point4 win_8_hlmv_padding = new Point4(18, 8, 51, 300);
         Point4 win_10_hlmv_padding = new Point4(18, 8, 51, 300);
+        Point4 win_11_hlmv_padding = new Point4(18, 8, 51, 300);
 
 
         public OS_Settings()
@@ -34,7 +35,8 @@ namespace TFMV.Functions
         // determines Os version and returns the padding for taking HLMV's render window screenshots (excluding the UI)
         public Point4 get_hlmv_padding()
         {
-            Point4 hlmv_padding = new Point4(18, 8, 50, 300);
+            //Point4 hlmv_padding = new Point4(18, 8, 50, 300);
+            Point4 hlmv_padding = new Point4(18, 8, 51, 300); //neodement: defaulting to the larger one as it seems more likely that not MS will stick with it going forward
 
             switch (this.os_version)
             {
@@ -46,6 +48,8 @@ namespace TFMV.Functions
                     return win_8_hlmv_padding;
                 case "win_10":
                     return win_10_hlmv_padding;
+                case "win_11":
+                    return win_11_hlmv_padding;
             }
 
             return hlmv_padding;
@@ -59,6 +63,7 @@ namespace TFMV.Functions
             if (OS_version.Contains(" 8 ")) { OS_version = "win_8"; }
             if (OS_version.Contains(" 8.1 ")) { OS_version = "win_8"; }
             if (OS_version.Contains(" 10 ")) { OS_version = "win_10"; }
+            if (OS_version.Contains(" 11 ")) { OS_version = "win_11"; }
             if (OS_version.ToLower().Contains(" xp")) { OS_version = "win_xp"; }
 
             return OS_version;

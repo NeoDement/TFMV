@@ -24,6 +24,8 @@ using TFMV.UserControls;
 using TFMV.SourceEngine;
 using TFMV.Functions;
 using TFMV.UserControls.Loadout;
+//using System.Windows.Shapes;
+using System.Xml.Linq;
 
 
 namespace TFMV
@@ -78,7 +80,7 @@ namespace TFMV
         const int VK_F5 = 0x74;
 
 
-        #region HLMV hook win32 Form controls adresses
+        #region HLMV hook win32 Form controls adsresses
 
         [DllImport("user32.dll", SetLastError = false)]
         public static extern IntPtr GetDlgItem(IntPtr hDlg, int nIDDlgItem);
@@ -121,6 +123,10 @@ namespace TFMV
         static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
         [DllImport("User32.dll")]
         static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOMOVE = 0x0002;
+        private const uint SWP_NOACTIVATE = 0x0010;
 
         // / <summary>
         // / 
@@ -229,6 +235,8 @@ namespace TFMV
 
         public static string tfmv_dir = "";
 
+        public static string tfmv_dir_short = "custom\\!TFMV\\";
+
         public static string vpk_tmp_path = "";
 
         public static string app_data_dir = Application.StartupPath + "\\config\\";
@@ -327,10 +335,10 @@ namespace TFMV
             }
         }
 
-        // hlmv window padding needed for taking screenshots (cropping area of HLMV's window)
-        // number of pixels (takes account for HLMV's form pannels, we only want to get the 3D render window region)
-        //todo: i think this number is wrong on windows 11
-        OS_Settings.Point4 hlmv_padding = new OS_Settings.Point4(18, 8, 50, 300);
+
+
+
+        OS_Settings.Point4 hlmv_padding = new OS_Settings.Point4(0, 0, 0, 0);
         OS_Settings OS_settings = new OS_Settings();
 
         //  DPI scaling factor, we use take this into account for the HLMV screenshot region
@@ -371,10 +379,7 @@ namespace TFMV
 
         public Main()
         {
-
-
             InitializeComponent();
-
 
             // for debugging: set config / schema directories to TFMV in desktop folder
             //(this is to stop you writing crap like updated schema pngs to the debug folder)
@@ -394,14 +399,23 @@ namespace TFMV
             //neodement: cubemaps_dir for cubemap functions
             cubemaps_dir = app_data_dir + "cubemaps\\";
 
+
+            //load jigglebone editor (hlmv doesn't work so its useless)
+            /*
             TFMV.UserControls.Jigglebone_Editor.AddJiggleBone jiggleForm = new TFMV.UserControls.Jigglebone_Editor.AddJiggleBone();
 
-            //this seems like it could be prone to breakage but it's fine for now.
-            //ParentForm.Enabled = false;
+            jiggleForm.Main_Form = this;
 
             //set up the jigglebone editor so it knows what mdl it's pointing at
             jiggleForm.mdlpath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Team Fortress 2\\tf\\models\\workshop\\player\\items\\medic\\birdkeepers_brim\\birdkeepers_brim.mdl";
+
+            string tf_dir = "C:\\Program Files(x86)\\Steam\\steamapps\\common\\Team Fortress 2\\tf";
+            tfmv_dir = (tf_dir + "custom\\TFMV\\").Replace("\\\\", "\\");
+
+            launch_hlmv("models\\workshop\\player\\items\\medic\\birdkeepers_brim\\birdkeepers_brim.mdl");
+
             jiggleForm.readJigglebones();
+            */
 
 #endif
 
@@ -516,12 +530,28 @@ namespace TFMV
 
 
 
+            //hlmv++ workaround
+
+            //if hlmv++ mode becomes checked, disable the helper bones thing. hlmv++ fixes it properly.
+
+            //slightly different from the code that runs when you actually check/uncheck the box.
+            //this one leaves in whatever state it was in instead of assuming you always want it enabled if not using hlmv++ mode.
+            if (cb_hlmvplusplus_mode.Checked)
+            {
+                cb_fix_hlp_bones.Checked = false;
+                cb_fix_hlp_bones.Enabled = false;
+                cb_fix_hlp_bones.Visible = false;
+            }
+
+
+
+
             #region API KEY STUFF
 
             //use the built-in one unless you were told not to
             //if (chk_API_Key.Checked)
             //{
-                steam_api_key = LoadAPIKey();
+            steam_api_key = LoadAPIKey();
             //}
             //else
             //{
@@ -541,10 +571,9 @@ namespace TFMV
             {
                 panel_APIKey.Visible = true;
                 txtb_API_Key.Text = steam_api_key;
-                boxL.Visible = false;
-                boxT.Visible = false;
-                boxR.Visible = false;
-                boxB.Visible = false;
+
+
+                //todo:api
             }
             #endregion
 
@@ -570,7 +599,7 @@ namespace TFMV
 
             #region clear temporary directories/content
 
-            // clear tfmv mod directory  tf/custom/TFMV/   
+            // clear tfmv mod directory  tf/custom/!TFMV/   
 
             miscFunc.DeleteDirectoryContent(tmp_dir);
             miscFunc.DeleteDirectoryContent(tmp_loadout_dir);
@@ -1534,7 +1563,7 @@ namespace TFMV
                         }
                         catch (Exception exception)
                         {
-                            MessageBox.Show("Warning: could not delete directory for temporary player materials\nMake sure no file is being used by another process in \\Team Fortress 2\\tf\\custom\\TFMV\\" + exception.ToString());
+                            MessageBox.Show("Warning: Could not delete directory for temporary player materials.\n\nMake sure no file is being used by another process in \\Team Fortress 2\\tf\\custom\\!TFMV\\.\n\n" + exception.ToString());
                         }
                 }
             }
@@ -1795,7 +1824,7 @@ namespace TFMV
         }
 
 
-        // sets mian model item (thumbnail) and model path
+        // sets main model item (thumbnail) and model path
         private void set_main_model(Loadout_Item _item, string model_path, Bitmap icon)
         {
             if ((_item == null) && (model_path == "") && (icon == null)) { MessageBox.Show("Invalid item."); return; }
@@ -1857,7 +1886,8 @@ namespace TFMV
                 Loadout_Item item = (Loadout_Item)loadout_list.Controls[i];
                 if (item._selected)
                 {
-                    set_main_model(item, "", null);
+                    set_main_model(item, item.model_path, null);
+                    //set_main_model(item, "", null);
                     item.Dispose();
                     break;
                 }
@@ -2053,7 +2083,6 @@ namespace TFMV
 
                 if (!bgWorker_load_workshop_items_to_listView.IsBusy)
                 {
-                    btn_cancel_screen_paints.Visible = true;
                     // call background worker
                     bgWorker_load_workshop_items_to_listView.RunWorkerAsync(arrObjects);
                 }
@@ -2550,15 +2579,15 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             {
                 //restore main model 
 
-                #region extract/copy main model to tf/custom/TFMV
+                #region extract/copy main model to tf/custom/!TFMV
 
                 string mdlpath = txtb_main_model.Text;
 
-                // check if main .mdl exists in tf/models, in VPK or in tf/custom/TFMV/models
+                // check if main .mdl exists in tf/models, in VPK or in tf/custom/!TFMV/models
                 // if it doesn't exist in drive, we copy it to TF/custom/models
                 // so we can load the model directly to HLMV by argument (without having to manually load recent files or F5)
 
-                // if exists in tf/models/ copy to tf/custom/TFMV/models/
+                // if exists in tf/models/ copy to tf/custom/!TFMV/models/
                 if (File.Exists(steamGameConfig.tf_dir + mdlpath))
                 {
                     string mdl_name = mdlpath.Replace(".mdl", "");
@@ -2569,7 +2598,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 }
 
                 else
-                { // if found in VPK, extract it to TF/custom/TFMV/...
+                { // if found in VPK, extract it to TF/custom/!TFMV/...
 
                     #region extract model
 
@@ -2609,6 +2638,20 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 refresh_hlmv(false);
             }
 
+
+            // for each model painter, disable or enable jigglebones button
+            foreach (var mp in skins_manager_control.Controls.OfType<Model_Painter>())
+            {
+                foreach (var button in mp.Controls.OfType<Button>())
+                {
+                    if (button.Name == "btn_editJigglebones" && button.Visible)
+                    {
+                        button.Enabled = !cb_disable_jigglebones.Checked;
+                    }
+                }
+            }
+
+
         }
 
 
@@ -2622,11 +2665,20 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
 
             // make number integer
-            if (txtb_hlmv_wsize_x.Text.Contains(".")) { txtb_hlmv_wsize_x.Text = txtb_hlmv_wsize_x.Text.Split('.')[0]; }
-            if (txtb_hlmv_wsize_y.Text.Contains(".")) { txtb_hlmv_wsize_y.Text = txtb_hlmv_wsize_y.Text.Split('.')[0]; }
+            double x_number = 0;
+            double y_number = 0;
 
-            int x = Convert.ToInt32(txtb_hlmv_wsize_x.Text);
-            int y = Convert.ToInt32(txtb_hlmv_wsize_y.Text);
+
+            double.TryParse(txtb_hlmv_wsize_x.Text, out x_number);
+            double.TryParse(txtb_hlmv_wsize_y.Text, out y_number);
+
+            int x = Convert.ToInt32(x_number);
+            int y = Convert.ToInt32(y_number);
+
+            txtb_hlmv_wsize_x.Text = x.ToString();
+            txtb_hlmv_wsize_y.Text = y.ToString();
+
+
 
             var rect = new Rect();
             GetWindowRect(proc_HLMV.MainWindowHandle, ref rect);
@@ -3287,15 +3339,33 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             // MessageBox.Show("Checking if sdk tools beta is installed in: \n" + steam_dir + tf_common_path + "bin\\");
             // return true;
             // steam_dir + tf_common_path + "tf\\"
-            if (File.Exists(steamGameConfig.tf2_dir + "bin\\hlmv.exe"))
+
+            //hlmv++ workaround
+            if (cb_hlmvplusplus_mode.Checked)
             {
-                return true;
+                if (File.Exists(steamGameConfig.tf2_dir + "bin\\x64\\hlmvplusplus.exe"))
+                {
+                    return true;
+                }
+                else
+                {
+                    MessageBox.Show("Error: could not find " + steamGameConfig.tf2_dir + "bin\\x64\\hlmvplusplus.exe");
+
+                    return false;
+                }
             }
             else
-            {
-                MessageBox.Show("Error: could not find " + steamGameConfig.tf2_dir + "bin\\hlmv.exe");
+            { 
+                if (File.Exists(steamGameConfig.tf2_dir + "bin\\hlmv.exe"))
+                {
+                    return true;
+                }
+                else
+                {
+                    MessageBox.Show("Error: could not find " + steamGameConfig.tf2_dir + "bin\\hlmv.exe");
 
-                return false;
+                    return false;
+                }
             }
         }
 
@@ -3408,6 +3478,9 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         write_flat_mat(tfmv_dir + @"materials\models\TFMV\tfmv_bg.vmt", panel_Bgcolor1.BackColor.R + " " + panel_Bgcolor1.BackColor.G + " " + panel_Bgcolor1.BackColor.B);
 
                         // save transparent image
+
+                        //SetClipboardImage(image_transparent);
+                        //Clipboard.SetDataObject(image_transparent);
                         image_transparent.Save(txtb_screenshots_dir.Text + "\\TFMV_" + date + ".png", formatEncoder, myEncoderParameters);
 
                         return image_transparent;
@@ -3419,6 +3492,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                         if (export_to_file)
                         {
+                            //Clipboard.SetImage(image);
                             image.Save(txtb_screenshots_dir.Text + "\\tfmv_" + date + ".png", formatEncoder, myEncoderParameters);
                         }
 
@@ -3536,6 +3610,15 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         // screenshots paint tool "Start" button
         private void btn_start_screen_paints_Click(object sender, EventArgs e)
         {
+
+            //cancel button functionality
+            if (bgWorker_ScreenPaintsTool.IsBusy)
+            {
+                bgWorker_ScreenPaintsTool.CancelAsync();
+                return;
+            }
+
+
             miscFunc.create_missing_dir(txtb_screenshots_dir.Text);
             // verify screenshots directory is set and is valid
             if (!Directory.Exists(txtb_screenshots_dir.Text))
@@ -3598,7 +3681,13 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             skins_manager_control.Enabled = false;
             panel_loadout.Enabled = false;
             numUpDown_screen_paints_delay.Enabled = false;
-            btn_cancel_screen_paints.Visible = true;
+
+            //btn_cancel_screen_paints.Visible = true;
+            //btn_start_screen_paints.Enabled = false;
+
+            //neodement: changed so start paint chart button doubles as cancel button.
+            //this allows the original cancel button position to be used for an "Open output folder" button
+            btn_start_screen_paints.Text = "Cancel";
 
             btn_rdo_PlayMat_TeamColor.Enabled = false;
             btn_rdo_PlayMat_Grey.Enabled = false;
@@ -3610,7 +3699,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             vtab_loadout.Enabled = false;
             btn_close_paints_chart.Enabled = false;
 
-            btn_start_screen_paints.Enabled = false;
+            //btn_start_screen_paints.Enabled = false;
+
             btn_pick_paints.Visible = false;
 
             lab_warn_refresh.Visible = true;
@@ -3630,7 +3720,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             if (!bgWorker_ScreenPaintsTool.IsBusy)
             {
-                btn_cancel_screen_paints.Visible = true;
+                //btn_cancel_screen_paints.Visible = true;
                 // call background worker
                 bgWorker_ScreenPaintsTool.RunWorkerAsync(arrObjects);
             }
@@ -3673,10 +3763,15 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             {
                 if ((mosaic_image_resolution.X > 15000) || (mosaic_image_resolution.Y > 15000))
                 {
-                    //todo: this should be a choice. not forced upon the user.
-                    MessageBox.Show("The maximum image resolution supported for the paints mosaic is 15000px by 15000px.\n\nPlease scale down the HLMV window size.\n\nFor higher resolutions generate individual images instead (untick \"merge screenshots into a mosaic\").");
-                    bgWorker_ScreenPaintsTool.CancelAsync();
-                    return;
+                    //neodement: we no longer force users not to generate huge mosaics
+                    DialogResult dialogResult = MessageBox.Show("The maximum recommended image resolution for a mosaic paint chart is 15000px by 15000px.\n\nYou may wish to scale down the HLMV window size to prevent TFMV running out of memory and crashing.\n\nWould you like to generate a mosaic anyway?", "Warning", MessageBoxButtons.YesNo);
+                    if (dialogResult == DialogResult.No)
+                    {
+                        bgWorker_ScreenPaintsTool.CancelAsync();
+                        return;
+                    }
+
+
                 }
             }
 
@@ -3699,6 +3794,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             Bitmap preview_moasic_image = new Bitmap(mosaic_image_resolution.X, mosaic_image_resolution.Y, PixelFormat.Format32bppPArgb);
             Graphics graphics_preview = Graphics.FromImage(preview_moasic_image);
+            preview_moasic_image = null; //kill it for perf
+
             int img_row = 0;
             int img_collumn = 0;
 
@@ -4202,8 +4299,13 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             btn_rdo_PaintsChart_mosaic_expt.Enabled = true;
             btn_rdo_PaintsChart_indiv_expt.Enabled = true;
 
-            btn_cancel_screen_paints.Visible = false;
-            btn_start_screen_paints.Enabled = true;
+            //btn_cancel_screen_paints.Visible = false;
+            //btn_start_screen_paints.Enabled = true;
+
+            //neodement: changed so start paint chart button doubles as cancel button.
+            //this allows the original cancel button position to be used for an "Open output folder" button
+            btn_start_screen_paints.Text = "Start";
+            
             panel_tools.Enabled = true;
             panel_hlmv_settings.Enabled = true;
             vtab_loadout.Enabled = true;
@@ -4256,10 +4358,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         }
 
         // cancel
+        //neodement: this is now obsolete (delete this?)
+        /*
         private void btn_cancel_screen_paints_Click(object sender, EventArgs e)
         {
             bgWorker_ScreenPaintsTool.CancelAsync();
         }
+        */
+
 
         private void btn_pick_paints_Click(object sender, EventArgs e)
         {
@@ -4568,18 +4674,20 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         if (item.Name_str.Contains("Upgradeable")) { continue; }
 
 
+                        string out_dir = tfmv_dir_short + "models\\TFMV_bodygroups\\";
+
                         //neodement: compiled some items hidden inside bodygroups as their own separate mdls. they are added as model paths here.
 
                         //add fake bodygroup for GENTLE MANNE'S SERVICE MEDAL
                         if (item.Name_str == "Web Easteregg Medal")
                         {
-                            item.model_path = "models\\TFMV_bodygroups\\soldier_medal_bodygroup.mdl";
+                            item.model_path = out_dir + "soldier_medal_bodygroup.mdl";
                         }
 
                         //add fake bodygroup for GUNSLINGER
                         if (item.Name_str == "The Gunslinger")
                         {
-                            item.model_path = "models\\TFMV_bodygroups\\engineer_gunslinger_bodygroup.mdl";
+                            item.model_path = out_dir + "engineer_gunslinger_bodygroup.mdl";
                         }
 
                         //manually disable arm bodygroup for SHORT CIRCUIT
@@ -4595,7 +4703,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         {
                             if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
 
-                            item.extra_wearable.mdl_path = "models\\TFMV_bodygroups\\heavy_purityfist_bodygroup.mdl";
+                            item.extra_wearable.mdl_path = out_dir + "heavy_purityfist_bodygroup.mdl";
 
                             item.visuals.player_bodygroups = new List<TF2.items_game.player_bodygroup>();
 
@@ -4607,16 +4715,15 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         {
                             if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
 
-                            item.extra_wearable.mdl_path = "models\\TFMV_bodygroups\\sniper_arrows_bodygroup.mdl";
+                            item.extra_wearable.mdl_path = out_dir + "sniper_arrows_bodygroup.mdl";
                         }
 
                         if (item.Name_str == "The Sydney Sleeper")
                         {
                             if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
 
-                            item.extra_wearable.mdl_path = "models\\TFMV_bodygroups\\sniper_darts_bodygroup.mdl";
+                            item.extra_wearable.mdl_path = out_dir + "sniper_darts_bodygroup.mdl";
                         }
-
 
 
                         string defindex = vdf_schema.sGet_KeyVal(node, "defindex");
@@ -4921,13 +5028,18 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 //slightly different error messages depending if the user is already overriding the default key or not
                 if (steam_api_key != internal_steam_api_key)
                 {
-                    MessageBox.Show("Failed to get items_game URL. The API Key may be invalid.\n\nYou can set an API Key at the bottom of the settings tab.", "Error"); // + e.Message
+                    MessageBox.Show("Failed to get items_game URL. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, your API Key may be invalid.\n\nYou can set or update your API Key in the settings tab.", "Error");
                 }
                 else
                 {
-                MessageBox.Show("Failed to get items_game URL. The built-in API Key may have expired.\n\nYou can set your own API Key at the bottom of the settings tab.", "Error"); // + e.Message
+                MessageBox.Show("Failed to get items_game URL. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, the built-in API Key may have expired.\n\nYou can set your own API Key in the settings tab.", "Error"); // + e.Message
                 }
 
+                //todo:api
+
+
+                //don't jump to the tab at all.
+                /*
                 //dont jump to the tab unless the schema is done loading.
                 if (!bgWorker_load_schema.IsBusy)
                 {
@@ -4939,6 +5051,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     txtb_API_Key.SelectionStart = txtb_API_Key.TextLength;
                     txtb_API_Key.SelectionLength = 0;
                 }
+                */
 
                 return false;
             }
@@ -5038,7 +5151,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                     case "extra_wearable":
                         if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
-                        item.extra_wearable.mdl_path = value;
+                            if (item.extra_wearable.mdl_path == null) { item.extra_wearable.mdl_path = value; } //todo: wrapping this in a null check fixed festive buff banner pack.mdl getting overridden with the base value in the prefab. maybe this should be applied to all keys?
                         continue;
 
                     case "item_slot":
@@ -5461,6 +5574,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             string schemaURL_path = schema_dir + "items_game_URL.txt";
 
+
+
             try
             {
                 using (WebClient Client = new WebClient())
@@ -5471,39 +5586,36 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
             catch (WebException e)
             {
-                if (e.Message.Contains("Internal Server Error"))
-                {
-                    MessageBox.Show("Could not download schema, the item server did not respond, \nserver might be down/offline, please try again in a few minutes.", "Error");
-                }
-                else
-                {
-                
-                // failed to download
 
-                //slightly different error messages depending if the user is already overriding the default key or not
-                if (steam_api_key != internal_steam_api_key)
-                {
-                    MessageBox.Show("Failed to get items_game URL. The API Key may be invalid.\n\nYou can set an API Key at the bottom of the settings tab.", "Error"); // + e.Message
-                }
-                else
-                {
-                    MessageBox.Show("Failed to get items_game URL. The built-in API Key may have expired.\n\nYou can set your own API Key at the bottom of the settings tab.", "Error"); // + e.Message
-                }
+                    MessageBox.Show("Could not download schema, the item server did not respond. \n(" + e.Message.ToString() + "). \n\nServer might be down/offline, please try again in a few minutes.\n\nIf this error persists, you can set a custom API Key on the Settings page.", "Error");
+
+                
+                        // failed to download
+
+                        //slightly different error messages depending if the user is already overriding the default key or not
+                        if (steam_api_key != internal_steam_api_key)
+                        {
+                            MessageBox.Show("Could not download schema, failed to get items_game URL. \n(" + e.Message.ToString() + "). \n\nThe API Key may be invalid.\n\nYou can set an API Key on the settings tab.", "Error"); // + e.Message
+                        }
+                        else
+                        {
+                            MessageBox.Show("Could not download schema, the item server did not respond. \n(" + e.Message.ToString() + "). \n\nServer might be down/offline, please try again in a few minutes.\n\nIf this error persists, you can set a custom API Key on the Settings page.", "Error");
+                        }
 
                 //set controls on main thread...
                 tabControl.BeginInvoke((Action)(() => tabControl.SelectedIndex = 1));
-                txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.Focus()));
-                txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionStart = txtb_API_Key.TextLength));
-                txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionLength = 0));
+                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.Focus()));
+                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionStart = txtb_API_Key.TextLength));
+                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionLength = 0));
 
-                panel_APIKey.BeginInvoke((Action)(() => panel_APIKey.Visible = true));
+                        panel_APIKey.BeginInvoke((Action)(() => panel_APIKey.Visible = true));
 
-                bgWorker_download_schema.CancelAsync();
+                        bgWorker_download_schema.CancelAsync();
                 
 
-                return;
+                        //return;
 
-                }
+                //}
 
                 return;
             }
@@ -7112,9 +7224,9 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
 
             // delete hwm materials
-            if (Directory.Exists(steamGameConfig.tf_dir + "custom\\TFMV\\materials\\models\\player\\" + player_name + "\\hwm\\"))
+            if (Directory.Exists(tfmv_dir + "materials\\models\\player\\" + player_name + "\\hwm\\"))
             {
-                Directory.Delete(steamGameConfig.tf_dir + "custom\\TFMV\\materials\\models\\player\\" + player_name + "\\hwm\\", true);
+                Directory.Delete(tfmv_dir + "materials\\models\\player\\" + player_name + "\\hwm\\", true);
             }
 
             // delete red skin
@@ -7146,7 +7258,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             if (skin_num == 1)
             {
-                // extract player vmt to tf/custom/TFMV/ 
+                // extract player vmt to tf/custom/!TFMV/ 
                 VPK.Extract("materials/" + player_dir + player_name + "_" + team + ".vmt", tfmv_dir + "materials/" + player_dir, 0);
 
                 // rename the _blue.vmt as _red.vmt
@@ -7175,7 +7287,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         VPK.Extract(spy_head_mat_path, tfmv_dir + "materials/models/player/spy/", 0);
                     }
 
-                    // extract player vmt to tf/custom/TFMV/ 
+                    // extract player vmt to tf/custom/!TFMV/ 
                     VPK.Extract(spy_head_mat_path, tfmv_dir + spy_head_mat_dir, 0);
 
 
@@ -7197,7 +7309,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     string medic_backpack_mat_dir = "materials/models/player/medic/";
                     string medic_backpack_red_mat_path = "materials/models/player/medic/medic_backpack_red.vmt";
 
-                    // extract player vmt to tf/custom/TFMV/ 
+                    // extract player vmt to tf/custom/!TFMV/ 
                     VPK.Extract(medic_backpack_mat_path, tfmv_dir + medic_backpack_mat_dir, 0);
 
                     // copy the _blue.vmt as _red.vmt
@@ -7252,6 +7364,47 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 MessageBox.Show("Error: You first need to load some models in HLMV.");
                 return;
             }
+
+            //vertical offset for each model painter
+            var vertical_offset = 0;
+
+
+
+
+
+            // if the are no attachments load the main model materials (neodement: disabled attachments check, why wouldn't we be able to modify the main model's materials?)
+            if (txtb_main_model.Text != "") // ((loadout_list.Controls.Count == 0) && 
+            {
+                string mdlpath = txtb_main_model.Text;
+                // do not load paints if the main model is a player model
+                if (!miscFunc.if_mdl_path_is_playermodel(mdlpath))
+                {
+                    Model_Painter mp = new Model_Painter();
+
+                    string model_filename = Path.GetFileName(mdlpath);
+                    mp.lab_mdl.Text = model_filename; // + "(" + mdlpath + ")"
+                    mp.lab_mdl.Tag = model_filename; //neodement: copied over from the loop below, but it seems to be unused
+                    mp.Text = "Model: " + model_filename; //is this used anywhere?
+                    mp.txt_mdlpath.Text = mdlpath; //
+                    mp.mdlpath = mdlpath;
+
+
+                    mp.paint_dir = tfmv_dir;
+                    mp.tf_dir = steamGameConfig.tf_dir;
+                    mp.skins = get_mats_sourcePaths(mdlpath);
+
+                    // loop through skins
+                    mp.Load_Skins(selected_team_skin_index);
+
+                    mp.Location = new Point(0, vertical_offset);
+
+                    vertical_offset = 105; //todo: define this as a constant?
+
+                    skins_manager_control.Controls.Add(mp);
+                }
+            }
+
+
 
             // for every model add a VMT  painter
             for (int i = 0; i < loadout_list.Controls.Count; i++)
@@ -7323,38 +7476,13 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 // loop through skins
                 mp.Load_Skins(skin_index);
 
-                mp.Location = new Point(0, i * 105);
+                //incease vertical offset for each model painter
+                mp.Location = new Point(0, vertical_offset);
+                vertical_offset += 105;
 
                 skins_manager_control.Controls.Add(mp);
             }
 
-
-            // if the are no attachments load the main model materials
-            if ((loadout_list.Controls.Count == 0) && (txtb_main_model.Text != ""))
-            {
-                string mdlpath = txtb_main_model.Text;
-                // do not load paints if the main model is a player model
-                if (!miscFunc.if_mdl_path_is_playermodel(mdlpath))
-                {
-                    Model_Painter mp = new Model_Painter();
-
-                    string model_filename = Path.GetFileName(mdlpath);
-                    mp.lab_mdl.Text = model_filename; // + "(" + mdlpath + ")"
-                    mp.Text = "Model: " + model_filename;
-                    mp.txt_mdlpath.Text = model_filename;
-
-                    mp.paint_dir = tfmv_dir;
-                    mp.tf_dir = steamGameConfig.tf_dir;
-                    mp.skins = get_mats_sourcePaths(mdlpath);
-
-                    // loop through skins
-                    mp.Load_Skins(selected_team_skin_index);
-
-                    mp.Location = new Point(0, 0);
-
-                    skins_manager_control.Controls.Add(mp);
-                }
-            }
 
 
             skins_manager_control.HorizontalScroll.Enabled = false;
@@ -7415,7 +7543,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             // else file not found
             else
             {
-                MessageBox.Show("Error: could not find model (" + search_filepath + ") in the game VPK, TF or TF/custom/TFMV/.");
+                MessageBox.Show("Error: could not find model (" + search_filepath + ") in the game VPK, TF or TF/custom/!TFMV/.");
             }
 
             return "";
@@ -7504,7 +7632,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             update_skins(true);
         }
 
-        // rewrites the VMTs in tf/custom/TFMV/materials for the items and refreshes HLMV (if its running)
+        // rewrites the VMTs in tf/custom/!TFMV/materials for the items and refreshes HLMV (if its running)
         public void update_skins(bool refresh)
         {
             bool has_model_painters = false;
@@ -7664,7 +7792,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         #region HLMV
 
 
-        // copy/extract models to tf/custom/TFMV/models
+        // copy/extract models to tf/custom/!TFMV/models
         // set HLMV main model settings and attachments
         // launch HLMV
         private void loadout_to_hlmv()
@@ -7672,9 +7800,9 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             string mdlpath = txtb_main_model.Text;
 
-            #region get main model to "tf/custom/TFMV/models"
+            #region get main model to "tf/custom/!TFMV/models"
 
-            // check if main .mdl exists in tf/models, in VPK or in tf/custom/TFMV/models
+            // check if main .mdl exists in tf/models, in VPK or in tf/custom/!TFMV/models
             // if it doesn't exist in drive, we copy it to TF/custom/models
             // so we can load the model directly to HLMV by argument (without having to manually load recent files or F5)
             if (File.Exists(steamGameConfig.tf_dir + mdlpath))
@@ -7692,7 +7820,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 miscFunc.copy_safe(mdl_in + ".phy", mdl_out + ".phy");
             }
             else
-            { // if found in VPK, extract it to TF/custom/TFMV/...
+            { // if found in VPK, extract it to TF/custom/!TFMV/...
                 #region extract model
 
                 if (VPK.Find(mdlpath, 0))
@@ -7750,7 +7878,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             #endregion
 
-            #region extract and copy model attachments to tf/custom/TFMV/models
+            #region extract and copy model attachments to tf/custom/!TFMV/models
 
             int max_models = 12;
             // Add TFMV background model if transparent screenshots are enabled in the screenshot settings
@@ -7807,7 +7935,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             //neodement: extract head texture from vpk and apply lod fix
 
 
-            miscFunc.create_missing_dir(steamGameConfig.tf_dir + "custom\\TFMV\\materials\\" + get_player_path_by_class(selected_player_class));
+            miscFunc.create_missing_dir(tfmv_dir + "materials\\" + get_player_path_by_class(selected_player_class));
 
             //TODO: by next release! make fixing head textures optional (but on by default)
             //if (cb_lodclamps.Checked)
@@ -7958,6 +8086,9 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             string args = "-game \"" + steamGameConfig.tf_dir.Replace("tf\\", "tf") + "\"" + " \"" + tfmv_dir + mdl_path + "\"";
 
+
+            //MessageBox.Show(args);
+
             close_hlmv();
 
             //MessageBox.Show("backing up rf file now");
@@ -8003,12 +8134,24 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 MessageBox.Show("backup complete! here's what we got:" + temp);
             */
 
+            string exename = "";
+
+            // hlmv++ workaround
+            if (cb_hlmvplusplus_mode.Checked)
+            {
+                exename = steamGameConfig.tf2_dir + "bin\\x64\\hlmvplusplus.exe";
+            }
+            else
+            {
+                exename = steamGameConfig.tf2_dir + "bin\\hlmv.exe";
+            }
+
             proc_HLMV = new Process
             {
-                StartInfo = new ProcessStartInfo
+            StartInfo = new ProcessStartInfo
                 {
                     WorkingDirectory = steamGameConfig.tf_dir,
-                    FileName = steamGameConfig.tf2_dir + "bin\\hlmv.exe",
+                    FileName = exename,
                     Arguments = args,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
@@ -8048,9 +8191,18 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     // reset to loadout panel but keep loadout list
                     reset_loadout(true);
 
-                    MessageBox.Show("The process hlmv.exe (model viewer) has closed unexpectedly." +
+
+                    // hlmv++ workaround
+                    if (cb_hlmvplusplus_mode.Checked)
+                    {
+                        MessageBox.Show("The process hlmvplusplus.exe has closed unexpectedly.");
+                    }
+                    else
+                    {
+                        MessageBox.Show("The process hlmv.exe (model viewer) has closed unexpectedly." +
                         "\n\nMake sure TF2 is updated and not in the middle of an update, verify integrity of files." +
                     "\n\nIf the problem persists, try running 'set_sdk_env.bat' and 'hlmv.bat' located in " + steamGameConfig.bin_dir);
+                    }
 
                     return;
                 }
@@ -8067,13 +8219,24 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 }
 
                 // make number integer
-                if (txtb_hlmv_def_wsize_x.Text.Contains(".")) { txtb_hlmv_def_wsize_x.Text = txtb_hlmv_def_wsize_x.Text.Split('.')[0]; }
-                if (txtb_hlmv_def_wsize_y.Text.Contains(".")) { txtb_hlmv_def_wsize_y.Text = txtb_hlmv_def_wsize_y.Text.Split('.')[0]; }
-                txtb_hlmv_def_wsize_x.Text = Regex.Replace(txtb_hlmv_def_wsize_x.Text, "[^0-9]", "");
-                txtb_hlmv_def_wsize_y.Text = Regex.Replace(txtb_hlmv_def_wsize_y.Text, "[^0-9]", "");
+                //if (txtb_hlmv_def_wsize_x.Text.Contains(".")) { txtb_hlmv_def_wsize_x.Text = txtb_hlmv_def_wsize_x.Text.Split('.')[0]; }
+                //if (txtb_hlmv_def_wsize_y.Text.Contains(".")) { txtb_hlmv_def_wsize_y.Text = txtb_hlmv_def_wsize_y.Text.Split('.')[0]; }
+                //txtb_hlmv_def_wsize_x.Text = Regex.Replace(txtb_hlmv_def_wsize_x.Text, "[^0-9]", "");
+                //txtb_hlmv_def_wsize_y.Text = Regex.Replace(txtb_hlmv_def_wsize_y.Text, "[^0-9]", "");
 
-                int x = Convert.ToInt32(txtb_hlmv_def_wsize_x.Text);
-                int y = Convert.ToInt32(txtb_hlmv_def_wsize_y.Text);
+
+                // make number integer
+                double x_number = 0;
+                double y_number = 0;
+
+                double.TryParse(txtb_hlmv_def_wsize_x.Text, out x_number);
+                double.TryParse(txtb_hlmv_def_wsize_y.Text, out y_number);
+
+                int x = Convert.ToInt32(x_number);
+                int y = Convert.ToInt32(y_number);
+
+                txtb_hlmv_def_wsize_x.Text = x.ToString();
+                txtb_hlmv_def_wsize_y.Text = y.ToString();
 
                 var rect = new Rect();
                 GetWindowRect(proc_HLMV.MainWindowHandle, ref rect);
@@ -8160,7 +8323,15 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error while closing HLMV.exe/n" + ex.Message);
+                    // hlmv++ workaround
+                    if (cb_hlmvplusplus_mode.Checked)
+                    {
+                        MessageBox.Show("Error while closing hlmvplusplus.exe/n" + ex.Message);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Error while closing HLMV.exe/n" + ex.Message);
+                    }
                 }
             }
         }
@@ -8634,7 +8805,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                             materials[m] = mat_path_guess + ".vmt";
                         }
 
-                        else if (File.Exists(steamGameConfig.tf_dir + "custom/TFMV/" + mat_path_guess + ".vmt"))
+                        else if (File.Exists(tfmv_dir + mat_path_guess + ".vmt"))
                         {
                             materials[m] = mat_path_guess + ".vmt";
                         }
@@ -8812,7 +8983,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
 
         // this method gets all .mdl files from the tmp folder and disables jigglebones.
-        // could maybe be used to edit other parts of the mdl later.
 
         private void mdl_disable_all_jigglebones_in_folder(string source, string target)
         {
@@ -8984,12 +9154,12 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             grey_material = true;
 
             // copy flat color texture
-            miscFunc.create_missing_dir(steamGameConfig.tf_dir + "custom\\TFMV\\materials\\tfmv\\");
-            if (!File.Exists(steamGameConfig.tf_dir + "custom\\TFMV\\materials\\tfmv\\flat_color.vtf"))
+            miscFunc.create_missing_dir(tfmv_dir + "materials\\tfmv\\");
+            if (!File.Exists(tfmv_dir + "materials\\tfmv\\flat_color.vtf"))
             {
                 try
                 {
-                    WriteResourceToFile("TFMV.Files.textures.flat_color.vtf", steamGameConfig.tf_dir + "custom\\TFMV\\materials\\tfmv\\flat_color.vtf");
+                    WriteResourceToFile("TFMV.Files.textures.flat_color.vtf", tfmv_dir + "materials\\tfmv\\flat_color.vtf");
                 }
                 catch { }
             }
@@ -9066,7 +9236,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         {
             if (mat.material == "") { return; }
 
-            string vmt_filepath = steamGameConfig.tf_dir + "custom\\TFMV\\" + mat.material + ".vmt";
+            string vmt_filepath = tfmv_dir + mat.material + ".vmt";
             miscFunc.create_missing_dir(Path.GetDirectoryName(vmt_filepath));
 
             VPK.Extract(mat.material + ".vmt", tfmv_dir + Path.GetDirectoryName(mat.material + ".vmt"), 0);
@@ -9159,12 +9329,12 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 {
                     // delete hwm
                     string classname = tfclass.class_name; if (classname == "demoman") { classname = "demo"; }
-                    string hwm_matdir = steamGameConfig.tf_dir + "custom\\TFMV\\materials\\models\\player\\" + classname + "\\hwm\\";
+                    string hwm_matdir = tfmv_dir + "materials\\models\\player\\" + classname + "\\hwm\\";
                     if (Directory.Exists(hwm_matdir)) { Directory.Delete(hwm_matdir, true); }
 
                     foreach (var mat in tfclass.materials)
                     {
-                        miscFunc.delete_safe(steamGameConfig.tf_dir + "custom\\TFMV\\" + mat.material + ".vmt");
+                        miscFunc.delete_safe(tfmv_dir + mat.material + ".vmt");
                     }
                 }
             }
@@ -9175,14 +9345,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                 // delete hwm
                 string classname = tfclass.class_name; if (classname == "demoman") { classname = "demo"; }
-                string hwm_matdir = steamGameConfig.tf_dir + "custom\\TFMV\\materials\\models\\player\\" + classname + "\\hwm\\";
+                string hwm_matdir = tfmv_dir + "materials\\models\\player\\" + classname + "\\hwm\\";
                 if (Directory.Exists(hwm_matdir)) { Directory.Delete(hwm_matdir, true); }
 
                 if (tfclass.class_name == selected_player_class)
                 {
                     foreach (var mat in tfclass.materials)
                     {
-                        miscFunc.delete_safe(steamGameConfig.tf_dir + "custom\\TFMV\\" + mat.material + ".vmt");
+                        miscFunc.delete_safe(tfmv_dir + mat.material + ".vmt");
                     }
                 }
             }
@@ -9641,7 +9811,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 {
                     if (list_mdl_dirs[i].Contains("materials") == false)
                     {
-                        if (list_mdl_dirs[i] != "") { miscFunc.copy_safe(list_mdl_dirs[i], steamGameConfig.tf_dir + "custom\\TFMV\\models\\"); }
+                        if (list_mdl_dirs[i] != "") { miscFunc.copy_safe(list_mdl_dirs[i], tfmv_dir + "models\\"); }
                     }
                 }
             }
@@ -9656,7 +9826,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 {
                     if (list_mat_dirs[i].Contains("models") == false)
                     {
-                        if (list_mat_dirs[i] != "") { miscFunc.copy_safe(list_mat_dirs[i], steamGameConfig.tf_dir + "custom\\TFMV\\materials\\"); }
+                        if (list_mat_dirs[i] != "") { miscFunc.copy_safe(list_mat_dirs[i], tfmv_dir + "materials\\"); }
                     }
                 }
             }
@@ -9701,11 +9871,11 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         }
 
 
-        // copy models and materials to "tf/custom/TFMV/" 
+        // copy models and materials to "tf/custom/!TFMV/" 
         private void CopySkins(string mdldir, string matdir)
         {
-            string models_path = steamGameConfig.tf_dir + "custom\\TFMV\\models\\";
-            string mats_path = steamGameConfig.tf_dir + "custom\\TFMV\\materials\\";
+            string models_path = tfmv_dir + "models\\";
+            string mats_path = tfmv_dir + "materials\\";
 
             if (Directory.Exists(mdldir))
             {
@@ -9752,7 +9922,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
         }
 
-        // load .mdl file, get material paths, try to find materials in tf/models/ copy to tf/custom/TFMV/
+        // load .mdl file, get material paths, try to find materials in tf/models/ copy to tf/custom/!TFMV/
         // if files not found, returns false
         private bool preload_mdl(string mdl_path)
         {
@@ -10117,16 +10287,16 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             close_hlmv();
 
-            miscFunc.DeleteDirectoryContent(steamGameConfig.tf_dir + "custom\\TFMV\\");
-            miscFunc.delete_safe(steamGameConfig.tf_dir + "custom\\TFMV\\");
+            miscFunc.DeleteDirectoryContent(tfmv_dir);
+            miscFunc.delete_safe(tfmv_dir);
 
             if (cb_disable_custom_mods.Checked)
             {
                 restore_custom_mods();
             }
 
-            miscFunc.DeleteDirectoryContent(steamGameConfig.tf_dir + "custom\\TFMV\\");
-            miscFunc.delete_safe(steamGameConfig.tf_dir + "custom\\TFMV\\");
+            miscFunc.DeleteDirectoryContent(tfmv_dir);
+            miscFunc.delete_safe(tfmv_dir);
 
             miscFunc.DeleteDirectoryContent(tmp_dir);
 
@@ -10218,9 +10388,17 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             txtb_hlmv_campos_y.Text = "0";
             txtb_hlmv_campos_z.Text = "37";
 
+            settings_save(txtb_hlmv_campos_x, e);
+            settings_save(txtb_hlmv_campos_y, e);
+            settings_save(txtb_hlmv_campos_z, e);
+
             txtb_hlmv_camrot_x.Text = "19";
             txtb_hlmv_camrot_y.Text = "18";
             txtb_hlmv_camrot_z.Text = "6";
+
+            settings_save(txtb_hlmv_camrot_x, e);
+            settings_save(txtb_hlmv_camrot_y, e);
+            settings_save(txtb_hlmv_camrot_z, e);
         }
 
         private void btn_reset_light_Click(object sender, EventArgs e)
@@ -10229,6 +10407,10 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             txtb_hlmv_lightrot_x.Text = "25";
             txtb_hlmv_lightrot_y.Text = "-162";
             txtb_hlmv_lightrot_z.Text = "-16";
+
+            settings_save(txtb_hlmv_lightrot_x, e);
+            settings_save(txtb_hlmv_lightrot_y, e);
+            settings_save(txtb_hlmv_lightrot_z, e);
 
             panel_aColor.BackColor = Color.FromArgb(255, 75, 75, 75);
             aColor = Color.FromArgb(255, 75, 75, 75);
@@ -10926,40 +11108,22 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         }
 
 
-        //this method makes sure the user can't type invalid stuff into textboxes intended for numbers. allows one decimal point and negative numbers.
+        //TODO: this is a copy of the one in TFMV.AddJiggleBone and both should be moved to a more generic functions script
+
+        //this method makes sure the user can't type invalid stuff into textboxes intended for numbers. allows . and - key presses.
         public void textBoxNumeric_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) &&
-                (e.KeyChar != '.') && (e.KeyChar != '-'))
-            {
-                e.Handled = true;
-            }
 
-            // only allow one decimal point
-            if ((e.KeyChar == '.') && ((sender as TextBox).Text.IndexOf('.') > -1))
-            {
-                e.Handled = true;
-            }
+            // Allow digits, control keys (e.g., backspace), '.' and '-'
+            if (char.IsDigit(e.KeyChar) || char.IsControl(e.KeyChar) || e.KeyChar == '.' || e.KeyChar == '-')
+                return;
 
-            // allow negative numbers
-            if ((e.KeyChar == '-'))
-            {
-                //if we already have a - anywhere in the number, ignore the keypress
-                if (((sender as TextBox).Text.IndexOf('-') > -1))
-                {
-                    e.Handled = true;
-                }
-                else
-                //if the user is attempting to put a - anywhere but the start of the string, ignore the keypress
-                {
-                    if ((sender as TextBox).SelectionStart != 0)
-                    {
-                        e.Handled = true;
-                    }
-                }
-            }
+            // Block all other inputs
+            e.Handled = true;
 
+            return;
         }
+
 
         //this method makes sure the user can't type invalid stuff into textboxes intended for simple numbers (window size, second count). doesn't allow any decimal points or negative numbers.
         private void textBoxNumericSimple_KeyPress(object sender, KeyPressEventArgs e)
@@ -10977,7 +11141,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
         private void btn_turntable_Click(object sender, EventArgs e)
         {
-            Turntable_GIF_Generator turntable_gen = new Turntable_GIF_Generator(proc_HLMV, txtb_screenshots_dir.Text);
+            Turntable_GIF_Generator turntable_gen = new Turntable_GIF_Generator(txtb_screenshots_dir.Text);
             turntable_gen.Location = new Point(0, 25);
 
             foreach (var c in tab_items.Controls)
@@ -11002,25 +11166,24 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
         // installs TFMV mods in "custom" folder, such as disabling the tiled fire overlay texture
         private void install_tfmv_mods()
-        {
-
+        { 
             //TODO: change these to use tfmv_dir variable instead of manually finding it?
 
             //create directory for fire overlay
-            miscFunc.create_missing_dir(steamGameConfig.tf_dir + "custom\\TFMV\\materials\\effects\\tiledfire\\");
+            miscFunc.create_missing_dir(tfmv_dir + "materials\\effects\\tiledfire\\");
 
             //create directory for fake bodygroups
-            string out_dir = steamGameConfig.tf_dir + "custom\\TFMV\\models\\TFMV_bodygroups\\";
+            string out_dir = tfmv_dir + "models\\TFMV_bodygroups\\";
             miscFunc.create_missing_dir(out_dir);
 
             //create directory for purity fist material fix
-            miscFunc.create_missing_dir(steamGameConfig.tf_dir + "custom\\TFMV\\materials\\models\\TFMV_bodygroups\\");
+            miscFunc.create_missing_dir(tfmv_dir + "materials\\models\\TFMV_bodygroups\\");
 
             try
             {
 
                 // write no fire overlay texture file
-                WriteResourceToFile("TFMV.Files.textures.fireLayeredSlowTiled512.vtf", steamGameConfig.tf_dir + "custom\\TFMV\\materials\\effects\\tiledfire\\fireLayeredSlowTiled512.vtf");
+                WriteResourceToFile("TFMV.Files.textures.fireLayeredSlowTiled512.vtf", tfmv_dir + "materials\\effects\\tiledfire\\fireLayeredSlowTiled512.vtf");
 
                 //write fake bodygroup files
 
@@ -11055,12 +11218,12 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 WriteResourceToFile("TFMV.Files.models.fakebodygroups.heavy_purityfist_bodygroup.swx.vtx", out_dir + "heavy_purityfist_bodygroup.sw.vtx");
                 WriteResourceToFile("TFMV.Files.models.fakebodygroups.heavy_purityfist_bodygroup.vvd", out_dir + "heavy_purityfist_bodygroup.vvd");
                 //PURITY FIST MATERIALS (to fix masking bug with tfmv bodygroup method)
-                WriteResourceToFile("TFMV.Files.models.fakebodygroups.hvyweapon_red_purityfist.vmt", steamGameConfig.tf_dir + "custom\\TFMV\\materials\\models\\TFMV_bodygroups\\hvyweapon_red_purityfist.vmt");
-                WriteResourceToFile("TFMV.Files.models.fakebodygroups.hvyweapon_blue_purityfist.vmt", steamGameConfig.tf_dir + "custom\\TFMV\\materials\\models\\TFMV_bodygroups\\hvyweapon_blue_purityfist.vmt");
+                WriteResourceToFile("TFMV.Files.models.fakebodygroups.hvyweapon_red_purityfist.vmt", tfmv_dir + "materials\\models\\TFMV_bodygroups\\hvyweapon_red_purityfist.vmt");
+                WriteResourceToFile("TFMV.Files.models.fakebodygroups.hvyweapon_blue_purityfist.vmt", tfmv_dir + "materials\\models\\TFMV_bodygroups\\hvyweapon_blue_purityfist.vmt");
 
                 if (cb_screenshot_transparency.Checked)
                 {
-                    out_dir = steamGameConfig.tf_dir + "custom\\TFMV\\models\\TFMV\\";
+                    out_dir = tfmv_dir + "models\\TFMV\\";
                     miscFunc.create_missing_dir(out_dir);
                     WriteResourceToFile("TFMV.Files.models.tfmv_bg.dx80.vtx", out_dir + "tfmv_bg.dx80.vtx");
                     WriteResourceToFile("TFMV.Files.models.tfmv_bg.dx90.vtx", out_dir + "tfmv_bg.dx90.vtx");
@@ -11121,20 +11284,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 }
         }
 
-        private void txtb_API_Key_TextChanged(object sender, EventArgs e)
-        {
-
-            string txtb_API_Key_Text = txtb_API_Key.Text;
-
-            //check if it's a 32 character Alphanumerical string. as soon as it is, try to save it
-            if (txtb_API_Key_Text.Length == 32 && Regex.IsMatch(txtb_API_Key_Text, "^[a-zA-Z0-9]*$"))
-            {
-                steam_api_key = txtb_API_Key.Text;
-                SaveAPIKey();
-            }
-
-        }
-
         private void lbl_EasterEgg_Click(object sender, EventArgs e)
         {
             img_EasterEgg.Visible = true;
@@ -11170,6 +11319,9 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         {
             txtb_hlmv_def_wsize_x.Text = "800";
             txtb_hlmv_def_wsize_y.Text = "600";
+
+            settings_save(txtb_hlmv_def_wsize_x, e);
+            settings_save(txtb_hlmv_def_wsize_y, e);
         }
 
         private void steamGameConfig_Load(object sender, EventArgs e)
@@ -11822,6 +11974,8 @@ End Class
 
         //Public theBodyParts As List(Of SourceMdlBodyPart);
 
+        //todo: this doesn't work, and isn't worth the time to get it working. remove it.
+
         private byte[] mdl_disable_bodygroup(string filepath)
         {
 
@@ -12314,6 +12468,7 @@ End Class
 
         private void chk_API_Key_CheckedChanged(object sender, EventArgs e)
         {
+            return;
             //MessageBox.Show("make this work!");
             //txtb_API_Key.Text = "";
 
@@ -12353,6 +12508,7 @@ End Class
         private void txtb_API_Key_Enter(object sender, EventArgs e)
         {
             //txtb_API_Key.UseSystemPasswordChar = false;
+            txtb_API_Key.PasswordChar = '\0';
         }
 
         private void list_view_MouseClick_1(object sender, MouseEventArgs e)
@@ -12361,10 +12517,10 @@ End Class
             {
                 if (!supress_TF2Item_ContextMenu)
                 {
-                    ExtdListViewItem focusedItem = (ExtdListViewItem)list_view.FocusedItem;
-                    if (focusedItem != null && focusedItem.Bounds.Contains(e.Location))
+                    int focusedItem = list_view.FocusedItem.Index;
+                    if (focusedItem >= 0 && list_view.Items[focusedItem].Bounds.Contains(e.Location))
                     {
-                        //tag is used to store right clicked item
+                        //tag is used to store right clicked item index
                         menu_TF2Item.Tag = focusedItem;
                         menu_TF2Item.Show(Cursor.Position);
                     }
@@ -12395,16 +12551,24 @@ End Class
         */
 
 
+        private void copyItemNameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExtdListViewItem item = (ExtdListViewItem)list_view.Items[(int)menu_TF2Item.Tag];
+
+            Clipboard.SetText(item.Text);
+        }
+
+
         private void copyMDLPathToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ExtdListViewItem item = (ExtdListViewItem)menu_TF2Item.Tag;
+            ExtdListViewItem item = (ExtdListViewItem)list_view.Items[(int)menu_TF2Item.Tag];
 
             Clipboard.SetText(item.model_path);
         }
 
         private void viewOnTF2WikiToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ExtdListViewItem item = (ExtdListViewItem)menu_TF2Item.Tag;
+            ExtdListViewItem item = (ExtdListViewItem)list_view.Items[(int)menu_TF2Item.Tag];
 
             string SearchItemName = (item.Text.Split('(')[0].Replace(" ", "_"));
 
@@ -12414,6 +12578,163 @@ End Class
         private void lab_tf2_itemlist_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void AddToLoadoutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExtdListViewItem item = (ExtdListViewItem)list_view.Items[(int)menu_TF2Item.Tag];
+
+            item.Checked = true;
+
+            //ItemCheckedEventArgs itemCheckedEventArgs = new ItemCheckedEventArgs(item);
+
+            //list_view_ItemChecked(list_view, itemCheckedEventArgs);
+        }
+
+        private void AddAsMainModelToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExtdListViewItem current_item = (ExtdListViewItem)list_view.Items[(int)menu_TF2Item.Tag];
+
+            current_item.Checked = true;
+
+            // de-select all items in loadout list
+            for (int i = 0; i < loadout_list.Controls.Count; i++)
+            {
+                Loadout_Item item = (Loadout_Item)loadout_list.Controls[i];
+
+                //select the one we are adding to the main slot
+                if (item.item_id == current_item.item_id)
+                {
+                    item._selected = true;
+                }
+                else
+                {
+                    item._selected = false;
+                }
+            }
+
+            //call the loadout model > main model conversion now it's all set up
+            btn_loadout_item_to_mainModel_Click(null, null);
+        }
+
+        //pop open the output folder if it exists
+        private void btn_show_screen_paints_dir_Click(object sender, EventArgs e)
+        {
+            if (!Directory.Exists(txtb_screenshots_dir.Text))
+            {
+                MessageBox.Show("Error: the screenshots directory is not set, define it in the settings.");
+                tabControl.BeginInvoke((Action)(() => tabControl.SelectedIndex = 1));
+                return;
+            }
+            else
+            {
+                Process.Start(txtb_screenshots_dir.Text);
+            }
+        }
+
+        private void button4_Click_1(object sender, EventArgs e)
+        {
+
+            double start = 0.0;
+            double end = 20.0;
+            double target = 5.0;
+
+            // Calculate the difference between the start and end values
+            double difference = end - start;
+
+            // Calculate the difference between the target value and the start value
+            double targetDifference = target - start;
+
+            // Calculate the interpolation factor by dividing the target difference by the overall difference
+            double interpolationFactor = targetDifference / difference;
+            
+            MessageBox.Show(interpolationFactor.ToString());
+
+            double interpolationFactor2 = (target - start) / (end - start);
+
+            MessageBox.Show(interpolationFactor2.ToString());
+        }
+
+        //hlmv++ workaround
+        private void cb_hlmvplusplus_mode_CheckedChanged(object sender, EventArgs e)
+        {
+            settings_save(sender, e);
+
+            //if hlmv++ mode becomes checked, disable the helper bones thing. hlmv++ fixes it properly.
+            if (cb_hlmvplusplus_mode.Checked)
+            {
+                cb_fix_hlp_bones.Checked = false;
+                cb_fix_hlp_bones.Enabled = false;
+                cb_fix_hlp_bones.Visible = false;
+            }
+            else
+            {
+                cb_fix_hlp_bones.Checked = true;
+                cb_fix_hlp_bones.Enabled = true;
+                cb_fix_hlp_bones.Visible = true;
+            }
+        }
+
+        private void textbox_text_to_double(object sender, EventArgs e)
+        {
+            TextBox textbox = sender as TextBox;
+            double number = 0;
+
+            double.TryParse(textbox.Text, out number);
+
+            int i = Convert.ToInt32(number);
+
+            textbox.Text = i.ToString();
+            
+            //save
+            settings_save(sender, e);
+        }
+
+        private void textbox_text_to_int(object sender, EventArgs e)
+        {
+            TextBox textbox = sender as TextBox;
+            double number = 0;
+
+            double.TryParse(textbox.Text, out number);
+
+            textbox.Text = number.ToString();
+
+            //save
+            settings_save(sender, e);
+        }
+
+        private void txtb_API_Key_Leave(object sender, EventArgs e)
+        {
+            //txtb_API_Key.UseSystemPasswordChar = true;
+            txtb_API_Key.PasswordChar = '●';
+
+
+            string txtb_API_Key_Text = txtb_API_Key.Text;
+
+            //check if it's a 32 character Alphanumerical string. as soon as it is, try to save it
+            if (txtb_API_Key_Text.Length == 32 && Regex.IsMatch(txtb_API_Key_Text, "^[a-zA-Z0-9]*$"))
+            {
+                steam_api_key = txtb_API_Key.Text;
+                SaveAPIKey();
+            }
+            else
+            {
+                MessageBox.Show("Invalid API key. Please see the instructions on the right.");
+            }
+        }
+
+        private void txtb_API_Key_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            //press enter to exit the textbox, Leave will check if it's valid and save it.
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                this.ActiveControl = null;
+                txtb_API_Key_Leave(sender, e);
+            }
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
         }
 
         private void disable_custom_mods()
@@ -12482,16 +12803,167 @@ End Class
             try
             {
                  File.WriteAllText(app_data_dir + "api_key.ini", steam_api_key);
-                 boxL.Visible = false;
-                 boxT.Visible = false;
-                 boxR.Visible = false;
-                 boxB.Visible = false;
             }
             catch
             {
                 MessageBox.Show("Failed to save API key to file.");
             }
         }
+
+
+        /*
+
+        #region set clipboard image (with transparency!)
+
+        //entirely from https://stackoverflow.com/questions/44177115/copying-from-and-to-clipboard-loses-image-transparency/46424800#46424800, thank you Nyerguds!
+
+
+
+
+
+
+
+
+        public static void WriteIntToByteArray(Byte[] data, Int32 startIndex, Int32 bytes, Boolean littleEndian, UInt32 value)
+        {
+            Int32 lastByte = bytes - 1;
+            if (data.Length < startIndex + bytes)
+                throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to write a " + bytes + "-byte value at offset " + startIndex + ".");
+            for (Int32 index = 0; index < bytes; index++)
+            {
+                Int32 offs = startIndex + (littleEndian ? index : lastByte - index);
+                data[offs] = (Byte)(value >> (8 * index) & 0xFF);
+            }
+        }
+
+        public static UInt32 ReadIntFromByteArray(Byte[] data, Int32 startIndex, Int32 bytes, Boolean littleEndian)
+        {
+            Int32 lastByte = bytes - 1;
+            if (data.Length < startIndex + bytes)
+                throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to read a " + bytes + "-byte value at offset " + startIndex + ".");
+            UInt32 value = 0;
+            for (Int32 index = 0; index < bytes; index++)
+            {
+                Int32 offs = startIndex + (littleEndian ? index : lastByte - index);
+                value += (UInt32)(data[offs] << (8 * index));
+            }
+            return value;
+        }
+
+
+
+
+
+        /// <summary>
+        /// Gets the raw bytes from an image.
+        /// </summary>
+        /// <param name="sourceImage">The image to get the bytes from.</param>
+        /// <param name="stride">Stride of the retrieved image data.</param>
+        /// <returns>The raw bytes of the image</returns>
+        public static Byte[] GetImageData(Bitmap sourceImage, out Int32 stride)
+        {
+            BitmapData sourceData = sourceImage.LockBits(new Rectangle(0, 0, sourceImage.Width, sourceImage.Height), ImageLockMode.ReadOnly, sourceImage.PixelFormat);
+            stride = sourceData.Stride;
+            Byte[] data = new Byte[stride * sourceImage.Height];
+            Marshal.Copy(sourceData.Scan0, data, 0, data.Length);
+            sourceImage.UnlockBits(sourceData);
+            return data;
+        }
+
+
+
+
+
+
+        //neodement: made imageNoTr and data into optional params by specifying = null
+        //removed ArrayUtils. and ImageUtils. as we don't have/need them
+
+        /// <summary>
+        /// Copies the given image to the clipboard as PNG, DIB and standard Bitmap format.
+        /// </summary>
+        /// <param name="image">Image to put on the clipboard.</param>
+        /// <param name="imageNoTr">Optional specifically nontransparent version of the image to put on the clipboard.</param>
+        /// <param name="data">Clipboard data object to put the image into. Might already contain other stuff. Leave null to create a new one.</param>
+        public static void SetClipboardImage(Bitmap image, Bitmap imageNoTr = null, DataObject data = null)
+        {
+            Clipboard.Clear();
+            if (data == null)
+                data = new DataObject();
+            if (imageNoTr == null)
+                imageNoTr = image;
+            using (MemoryStream pngMemStream = new MemoryStream())
+            using (MemoryStream dibMemStream = new MemoryStream())
+            {
+                // As standard bitmap, without transparency support
+                data.SetData(DataFormats.Bitmap, true, imageNoTr);
+                // As PNG. Gimp will prefer this over the other two.
+                image.Save(pngMemStream, ImageFormat.Png);
+                data.SetData("PNG", false, pngMemStream);
+                // As DIB. This is (wrongly) accepted as ARGB by many applications.
+                Byte[] dibData = ConvertToDib(image);
+                dibMemStream.Write(dibData, 0, dibData.Length);
+                data.SetData(DataFormats.Dib, false, dibMemStream);
+                // The 'copy=true' argument means the MemoryStreams can be safely disposed after the operation.
+                Clipboard.SetDataObject(data, true);
+            }
+        }
+
+        /// <summary>
+        /// Converts the image to Device Independent Bitmap format of type BITFIELDS.
+        /// This is (wrongly) accepted by many applications as containing transparency,
+        /// so I'm abusing it for that.
+        /// </summary>
+        /// <param name="image">Image to convert to DIB</param>
+        /// <returns>The image converted to DIB, in bytes.</returns>
+        public static Byte[] ConvertToDib(Image image)
+        {
+            Byte[] bm32bData;
+            Int32 width = image.Width;
+            Int32 height = image.Height;
+            // Ensure image is 32bppARGB by painting it on a new 32bppARGB image.
+            using (Bitmap bm32b = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb))
+            {
+                using (Graphics gr = Graphics.FromImage(bm32b))
+                    gr.DrawImage(image, new Rectangle(0, 0, bm32b.Width, bm32b.Height));
+                // Bitmap format has its lines reversed.
+                bm32b.RotateFlip(RotateFlipType.Rotate180FlipX);
+                Int32 stride;
+                bm32bData = GetImageData(bm32b, out stride);
+            }
+            // BITMAPINFOHEADER struct for DIB.
+            Int32 hdrSize = 0x28;
+            Byte[] fullImage = new Byte[hdrSize + 12 + bm32bData.Length];
+            //Int32 biSize;
+            WriteIntToByteArray(fullImage, 0x00, 4, true, (UInt32)hdrSize);
+            //Int32 biWidth;
+            WriteIntToByteArray(fullImage, 0x04, 4, true, (UInt32)width);
+            //Int32 biHeight;
+            WriteIntToByteArray(fullImage, 0x08, 4, true, (UInt32)height);
+            //Int16 biPlanes;
+            WriteIntToByteArray(fullImage, 0x0C, 2, true, 1);
+            //Int16 biBitCount;
+            WriteIntToByteArray(fullImage, 0x0E, 2, true, 32);
+            //BITMAPCOMPRESSION biCompression = BITMAPCOMPRESSION.BITFIELDS;
+            WriteIntToByteArray(fullImage, 0x10, 4, true, 3);
+            //Int32 biSizeImage;
+            WriteIntToByteArray(fullImage, 0x14, 4, true, (UInt32)bm32bData.Length);
+            // These are all 0. Since .net clears new arrays, don't bother writing them.
+            //Int32 biXPelsPerMeter = 0;
+            //Int32 biYPelsPerMeter = 0;
+            //Int32 biClrUsed = 0;
+            //Int32 biClrImportant = 0;
+
+            // The aforementioned "BITFIELDS": colour masks applied to the Int32 pixel value to get the R, G and B values.
+            WriteIntToByteArray(fullImage, hdrSize + 0, 4, true, 0x00FF0000);
+            WriteIntToByteArray(fullImage, hdrSize + 4, 4, true, 0x0000FF00);
+            WriteIntToByteArray(fullImage, hdrSize + 8, 4, true, 0x000000FF);
+            Array.Copy(bm32bData, 0, fullImage, hdrSize + 12, bm32bData.Length);
+            return fullImage;
+        }
+
+        #endregion
+
+        */
 
 
         #endregion

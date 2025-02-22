@@ -221,8 +221,17 @@ namespace TFMV.SourceEngine
         }
 
         // sets paint color2
-        public static void set_color2(string filepath, string color)
+        public static void set_color2(string filepath, string color/*, string out_filepath = ""*/)
         {
+            //neodement: todo: ?
+
+            //added out_filepath so editing the blue vmt can still output changes into the vmt in the skin0 slot.
+            //don't worry, the "bonk_helmet_skin0.vmt" remains untouched.
+            //if (out_filepath != "")
+            //{
+            //
+            //}
+
             if (!File.Exists(filepath) || color == "" || color == " ") { return; }
 
             List<string> vmt_lines = new List<string>();

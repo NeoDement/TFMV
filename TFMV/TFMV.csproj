@@ -93,9 +93,6 @@
     <Reference Include="Ionic.Zip">
       <HintPath>bin\Debug\Libs\Ionic.Zip.dll</HintPath>
     </Reference>
-    <Reference Include="LibDithering, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\LibDithering.1.0.0\lib\netstandard2.0\LibDithering.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.JScript" />
     <Reference Include="MouseKeyboardLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
