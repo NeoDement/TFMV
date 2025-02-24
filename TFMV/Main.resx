@@ -195,240 +195,6 @@
   <data name="&gt;&gt;txtb_main_model.ZOrder" xml:space="preserve">
     <value>4</value>
   </data>
-  <data name="checkBox1.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
-  </data>
-  <data name="checkBox1.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
-    <value>Flat</value>
-  </data>
-  <data name="checkBox1.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
-  </data>
-  <data name="checkBox1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>17, 34</value>
-  </data>
-  <data name="checkBox1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>103, 17</value>
-  </data>
-  <data name="checkBox1.TabIndex" type="System.Int32, mscorlib">
-    <value>38</value>
-  </data>
-  <data name="checkBox1.Text" xml:space="preserve">
-    <value>Override API key</value>
-  </data>
-  <data name="&gt;&gt;checkBox1.Name" xml:space="preserve">
-    <value>checkBox1</value>
-  </data>
-  <data name="&gt;&gt;checkBox1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;checkBox1.Parent" xml:space="preserve">
-    <value>panel_APIKey</value>
-  </data>
-  <data name="&gt;&gt;checkBox1.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
-  <data name="label51.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
-  </data>
-  <data name="label51.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
-  </data>
-  <data name="label51.Location" type="System.Drawing.Point, System.Drawing">
-    <value>239, 170</value>
-  </data>
-  <data name="label51.Size" type="System.Drawing.Size, System.Drawing">
-    <value>48, 13</value>
-  </data>
-  <data name="label51.TabIndex" type="System.Int32, mscorlib">
-    <value>2</value>
-  </data>
-  <data name="label51.Text" xml:space="preserve">
-    <value>API Key:</value>
-  </data>
-  <data name="&gt;&gt;label51.Name" xml:space="preserve">
-    <value>label51</value>
-  </data>
-  <data name="&gt;&gt;label51.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;label51.Parent" xml:space="preserve">
-    <value>panel_APIKey</value>
-  </data>
-  <data name="&gt;&gt;label51.ZOrder" xml:space="preserve">
-    <value>1</value>
-  </data>
-  <data name="label45.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
-  </data>
-  <data name="label45.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Microsoft Sans Serif, 12pt, style=Bold</value>
-  </data>
-  <data name="label45.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
-  </data>
-  <data name="label45.Location" type="System.Drawing.Point, System.Drawing">
-    <value>3, 3</value>
-  </data>
-  <data name="label45.Size" type="System.Drawing.Size, System.Drawing">
-    <value>78, 20</value>
-  </data>
-  <data name="label45.TabIndex" type="System.Int32, mscorlib">
-    <value>1</value>
-  </data>
-  <data name="label45.Text" xml:space="preserve">
-    <value>API KEY</value>
-  </data>
-  <data name="&gt;&gt;label45.Name" xml:space="preserve">
-    <value>label45</value>
-  </data>
-  <data name="&gt;&gt;label45.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;label45.Parent" xml:space="preserve">
-    <value>panel37</value>
-  </data>
-  <data name="&gt;&gt;label45.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
-  <data name="panel37.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 1</value>
-  </data>
-  <data name="panel37.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1293, 25</value>
-  </data>
-  <data name="panel37.TabIndex" type="System.Int32, mscorlib">
-    <value>31</value>
-  </data>
-  <data name="&gt;&gt;panel37.Name" xml:space="preserve">
-    <value>panel37</value>
-  </data>
-  <data name="&gt;&gt;panel37.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;panel37.Parent" xml:space="preserve">
-    <value>panel_APIKey</value>
-  </data>
-  <data name="&gt;&gt;panel37.ZOrder" xml:space="preserve">
-    <value>2</value>
-  </data>
-  <data name="txtb_API_Key.Enabled" type="System.Boolean, mscorlib">
-    <value>False</value>
-  </data>
-  <data name="txtb_API_Key.Location" type="System.Drawing.Point, System.Drawing">
-    <value>17, 53</value>
-  </data>
-  <data name="txtb_API_Key.PasswordChar" type="System.Char, mscorlib" xml:space="preserve">
-    <value>●</value>
-  </data>
-  <data name="txtb_API_Key.Size" type="System.Drawing.Size, System.Drawing">
-    <value>385, 20</value>
-  </data>
-  <data name="txtb_API_Key.TabIndex" type="System.Int32, mscorlib">
-    <value>9</value>
-  </data>
-  <data name="&gt;&gt;txtb_API_Key.Name" xml:space="preserve">
-    <value>txtb_API_Key</value>
-  </data>
-  <data name="&gt;&gt;txtb_API_Key.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;txtb_API_Key.Parent" xml:space="preserve">
-    <value>panel_APIKey</value>
-  </data>
-  <data name="&gt;&gt;txtb_API_Key.ZOrder" xml:space="preserve">
-    <value>3</value>
-  </data>
-  <data name="linkLabel2.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
-  </data>
-  <data name="linkLabel2.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
-  </data>
-  <data name="linkLabel2.LinkArea" type="System.Windows.Forms.LinkArea, System.Windows.Forms">
-    <value>204, 37</value>
-  </data>
-  <data name="linkLabel2.Location" type="System.Drawing.Point, System.Drawing">
-    <value>411, 32</value>
-  </data>
-  <data name="linkLabel2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>464, 55</value>
-  </data>
-  <data name="linkLabel2.TabIndex" type="System.Int32, mscorlib">
-    <value>37</value>
-  </data>
-  <data name="linkLabel2.Text" xml:space="preserve">
-    <value>An API Key is neccessary in order to download the TF2 item schema from Valve's servers.
-
-If the built-in API Key has expired or stopped working for any reason, you can get your own
-Steam API Key here: https://steamcommunity.com/dev/apikey</value>
-  </data>
-  <data name="&gt;&gt;linkLabel2.Name" xml:space="preserve">
-    <value>linkLabel2</value>
-  </data>
-  <data name="&gt;&gt;linkLabel2.Type" xml:space="preserve">
-    <value>System.Windows.Forms.LinkLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;linkLabel2.Parent" xml:space="preserve">
-    <value>panel_APIKey</value>
-  </data>
-  <data name="&gt;&gt;linkLabel2.ZOrder" xml:space="preserve">
-    <value>4</value>
-  </data>
-  <data name="chk_HideAPIKey.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
-  </data>
-  <data name="chk_HideAPIKey.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
-    <value>Flat</value>
-  </data>
-  <data name="chk_HideAPIKey.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
-  </data>
-  <data name="chk_HideAPIKey.Location" type="System.Drawing.Point, System.Drawing">
-    <value>445, 150</value>
-  </data>
-  <data name="chk_HideAPIKey.Size" type="System.Drawing.Size, System.Drawing">
-    <value>85, 17</value>
-  </data>
-  <data name="chk_HideAPIKey.TabIndex" type="System.Int32, mscorlib">
-    <value>21</value>
-  </data>
-  <data name="chk_HideAPIKey.Text" xml:space="preserve">
-    <value>Hide API key</value>
-  </data>
-  <data name="&gt;&gt;chk_HideAPIKey.Name" xml:space="preserve">
-    <value>chk_HideAPIKey</value>
-  </data>
-  <data name="&gt;&gt;chk_HideAPIKey.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;chk_HideAPIKey.Parent" xml:space="preserve">
-    <value>panel_APIKey</value>
-  </data>
-  <data name="&gt;&gt;chk_HideAPIKey.ZOrder" xml:space="preserve">
-    <value>5</value>
-  </data>
-  <data name="panel_APIKey.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 434</value>
-  </data>
-  <data name="panel_APIKey.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1160, 258</value>
-  </data>
-  <data name="panel_APIKey.TabIndex" type="System.Int32, mscorlib">
-    <value>39</value>
-  </data>
-  <data name="&gt;&gt;panel_APIKey.Name" xml:space="preserve">
-    <value>panel_APIKey</value>
-  </data>
-  <data name="&gt;&gt;panel_APIKey.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;panel_APIKey.Parent" xml:space="preserve">
-    <value>Settings</value>
-  </data>
-  <data name="&gt;&gt;panel_APIKey.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
   <data name="lstStartupTab_Slot.Items" xml:space="preserve">
     <value>Primary</value>
   </data>
@@ -475,7 +241,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;lstStartupTab_Slot.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>0</value>
   </data>
   <data name="label49.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -505,7 +271,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;label49.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>1</value>
   </data>
   <data name="lstStartupTab_Class.Items" xml:space="preserve">
     <value>Scout</value>
@@ -553,7 +319,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;lstStartupTab_Class.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>2</value>
   </data>
   <data name="label48.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -583,7 +349,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;label48.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>3</value>
   </data>
   <data name="panel12.Location" type="System.Drawing.Point, System.Drawing">
     <value>673, 141</value>
@@ -604,7 +370,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel12.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>4</value>
   </data>
   <data name="lab_trsp_scrn1.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -637,7 +403,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;lab_trsp_scrn1.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>5</value>
   </data>
   <data name="lab_trsp_scrn.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -670,7 +436,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;lab_trsp_scrn.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>6</value>
   </data>
   <data name="numUpDown_screenshot_delay.Location" type="System.Drawing.Point, System.Drawing">
     <value>793, 351</value>
@@ -697,7 +463,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;numUpDown_screenshot_delay.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>7</value>
   </data>
   <data name="label13.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -727,7 +493,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;label13.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>8</value>
   </data>
   <data name="cb_screenshot_transparency.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -760,7 +526,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_screenshot_transparency.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>9</value>
   </data>
   <data name="cb_strict_paintablity.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -796,7 +562,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_strict_paintablity.ZOrder" xml:space="preserve">
-    <value>11</value>
+    <value>10</value>
   </data>
   <data name="label33.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -850,7 +616,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel20.ZOrder" xml:space="preserve">
-    <value>12</value>
+    <value>11</value>
   </data>
   <data name="txtb_screenshots_dir.Location" type="System.Drawing.Point, System.Drawing">
     <value>17, 346</value>
@@ -871,7 +637,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;txtb_screenshots_dir.ZOrder" xml:space="preserve">
-    <value>13</value>
+    <value>12</value>
   </data>
   <data name="label32.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -925,7 +691,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel23.ZOrder" xml:space="preserve">
-    <value>14</value>
+    <value>13</value>
   </data>
   <data name="btn_sel_screensdir.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -955,7 +721,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;btn_sel_screensdir.ZOrder" xml:space="preserve">
-    <value>15</value>
+    <value>14</value>
   </data>
   <data name="cb_allow_tournament_medals.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -991,7 +757,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_allow_tournament_medals.ZOrder" xml:space="preserve">
-    <value>16</value>
+    <value>15</value>
   </data>
   <data name="cb_hlmvplusplus_mode.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1027,7 +793,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_hlmvplusplus_mode.ZOrder" xml:space="preserve">
-    <value>17</value>
+    <value>16</value>
   </data>
   <data name="cb_strict_equip_regions.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1063,7 +829,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_strict_equip_regions.ZOrder" xml:space="preserve">
-    <value>18</value>
+    <value>17</value>
   </data>
   <data name="btn_dl_schema.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -1093,7 +859,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;btn_dl_schema.ZOrder" xml:space="preserve">
-    <value>19</value>
+    <value>18</value>
   </data>
   <data name="cb_hlmv_antialias.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1126,7 +892,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_hlmv_antialias.ZOrder" xml:space="preserve">
-    <value>20</value>
+    <value>19</value>
   </data>
   <data name="label15.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1180,7 +946,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel9.ZOrder" xml:space="preserve">
-    <value>21</value>
+    <value>20</value>
   </data>
   <data name="cb_lodclamps.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1216,7 +982,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_lodclamps.ZOrder" xml:space="preserve">
-    <value>22</value>
+    <value>21</value>
   </data>
   <data name="cb_hwm.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1249,7 +1015,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_hwm.ZOrder" xml:space="preserve">
-    <value>23</value>
+    <value>22</value>
   </data>
   <data name="cb_disable_fov_mod.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1285,7 +1051,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_disable_fov_mod.ZOrder" xml:space="preserve">
-    <value>24</value>
+    <value>23</value>
   </data>
   <data name="cb_adv_settings_start_open.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1318,7 +1084,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_adv_settings_start_open.ZOrder" xml:space="preserve">
-    <value>25</value>
+    <value>24</value>
   </data>
   <data name="cb_disable_custom_mods.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1351,7 +1117,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_disable_custom_mods.ZOrder" xml:space="preserve">
-    <value>26</value>
+    <value>25</value>
   </data>
   <data name="cb_autoexpandonstartup.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1384,7 +1150,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_autoexpandonstartup.ZOrder" xml:space="preserve">
-    <value>27</value>
+    <value>26</value>
   </data>
   <data name="cb_AllowMultipleProc.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1417,7 +1183,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_AllowMultipleProc.ZOrder" xml:space="preserve">
-    <value>28</value>
+    <value>27</value>
   </data>
   <data name="label14.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1471,7 +1237,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel8.ZOrder" xml:space="preserve">
-    <value>29</value>
+    <value>28</value>
   </data>
   <data name="label1.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1525,7 +1291,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel1.ZOrder" xml:space="preserve">
-    <value>30</value>
+    <value>29</value>
   </data>
   <data name="btn_recache_schema.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -1558,7 +1324,7 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;btn_recache_schema.ZOrder" xml:space="preserve">
-    <value>31</value>
+    <value>30</value>
   </data>
   <data name="steamGameConfig.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 10</value>
@@ -1573,13 +1339,13 @@ Steam API Key here: https://steamcommunity.com/dev/apikey</value>
     <value>steamGameConfig</value>
   </data>
   <data name="&gt;&gt;steamGameConfig.Type" xml:space="preserve">
-    <value>TFMV.SourceEngine.SteamGameConfig, TFMV, Version=0.68.3.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TFMV.SourceEngine.SteamGameConfig, TFMV, Version=0.7.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;steamGameConfig.Parent" xml:space="preserve">
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;steamGameConfig.ZOrder" xml:space="preserve">
-    <value>32</value>
+    <value>31</value>
   </data>
   <data name="Settings.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 25</value>
@@ -3900,7 +3666,7 @@ removed "Done" message when a paint chart fails TODO</value>
     <value>colorPicker_master</value>
   </data>
   <data name="&gt;&gt;colorPicker_master.Type" xml:space="preserve">
-    <value>TFMV.PaintColorPicker, TFMV, Version=0.68.3.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TFMV.PaintColorPicker, TFMV, Version=0.7.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;colorPicker_master.Parent" xml:space="preserve">
     <value>panel_paints</value>
@@ -4326,7 +4092,7 @@ removed "Done" message when a paint chart fails TODO</value>
     <value>bodygroup_manager_panel</value>
   </data>
   <data name="&gt;&gt;bodygroup_manager_panel.Type" xml:space="preserve">
-    <value>TFMV.UserControls.Bodygroup_manager, TFMV, Version=0.68.3.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TFMV.UserControls.Bodygroup_manager, TFMV, Version=0.7.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;bodygroup_manager_panel.Parent" xml:space="preserve">
     <value>panel_tools</value>

@@ -257,8 +257,6 @@ namespace TFMV
         //neodement: special variable so we know not to trigger the dialog when changing medal setting if a user didn't click it.
         bool cb_allow_tournament_medals_SupressCheckedChange = false;
 
-        private static string tools_dir = Application.StartupPath + "\\tools\\";
-
         #endregion
 
 
@@ -272,6 +270,8 @@ namespace TFMV
         //don't save settings if you haven't loaded settings yet
         private bool settings_loaded = false;
 
+        //there are some things we only want to do once, like check if the user has TFMV++ and default to it.
+        bool firstRun = true;
 
         //selection of paints (indices) that the user selects to have for the "screenshot paints tool" mosaic generation
         public static List<byte> paints_selection = new List<byte>();
@@ -386,7 +386,6 @@ namespace TFMV
 #if DEBUG
 
             app_data_dir = "C:\\Users\\" + DirUserName + "\\Desktop\\TFMV\\config\\";
-            tools_dir = "C:\\Users\\" + DirUserName + "\\Desktop\\TFMV\\tools\\";
 
             schema_dir = app_data_dir + "tf2_schema\\";
             settings_dir = app_data_dir;
@@ -398,24 +397,6 @@ namespace TFMV
 
             //neodement: cubemaps_dir for cubemap functions
             cubemaps_dir = app_data_dir + "cubemaps\\";
-
-
-            //load jigglebone editor (hlmv doesn't work so its useless)
-            /*
-            TFMV.UserControls.Jigglebone_Editor.AddJiggleBone jiggleForm = new TFMV.UserControls.Jigglebone_Editor.AddJiggleBone();
-
-            jiggleForm.Main_Form = this;
-
-            //set up the jigglebone editor so it knows what mdl it's pointing at
-            jiggleForm.mdlpath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Team Fortress 2\\tf\\models\\workshop\\player\\items\\medic\\birdkeepers_brim\\birdkeepers_brim.mdl";
-
-            string tf_dir = "C:\\Program Files(x86)\\Steam\\steamapps\\common\\Team Fortress 2\\tf";
-            tfmv_dir = (tf_dir + "custom\\TFMV\\").Replace("\\\\", "\\");
-
-            launch_hlmv("models\\workshop\\player\\items\\medic\\birdkeepers_brim\\birdkeepers_brim.mdl");
-
-            jiggleForm.readJigglebones();
-            */
 
 #endif
 
@@ -548,33 +529,15 @@ namespace TFMV
 
             #region API KEY STUFF
 
-            //use the built-in one unless you were told not to
-            //if (chk_API_Key.Checked)
-            //{
-            steam_api_key = LoadAPIKey();
-            //}
-            //else
-            //{
-            //    steam_api_key = internal_steam_api_key;
-            //}
 
-            //neodement:
-            //if api key was empty the above function will have thrown out an appropriate error message explaining why (not anymore)
+            steam_api_key = LoadAPIKey();
+
+            //if there was no key saved, use the internal one
             if (steam_api_key == "")
             {
-                //tabControl.SelectedIndex = 1;
-                panel_APIKey.Visible = false;
                 steam_api_key = internal_steam_api_key;
-
             }
-            else
-            {
-                panel_APIKey.Visible = true;
-                txtb_API_Key.Text = steam_api_key;
 
-
-                //todo:api
-            }
             #endregion
 
 
@@ -656,6 +619,18 @@ namespace TFMV
 
             // check steam dir and tf2 dir
             steamGameConfig.load_game_config(true);
+
+            //automatically enable hlmv++ first time we run TFMV, if hlmv++ is available
+            if (File.Exists(steamGameConfig.tf2_dir + "bin\\x64\\hlmvplusplus.exe") && firstRun)
+            {
+                cb_hlmvplusplus_mode.Checked = true;
+
+                EventArgs e = new EventArgs();
+
+                settings_save("firstRun", EventArgs.Empty);
+
+                firstRun = false;
+            }
 
 
             #region install TFMV mods (null fire overlay, for HLMV anti aliasing)
@@ -3005,6 +2980,13 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     obj_name = obj.Name.ToString();
                     arg = obj.Value.ToString();
                 }
+                
+                //for strings, we currently just assume it's 0 (for changing firstRun to false)
+                if (sender.GetType() == typeof(String))
+                {
+                    obj_name = (String)sender;
+                    arg = "0";
+                }
 
 
                 TextWriter tw = new StreamWriter(settings_dir + "settings.ini");
@@ -3061,6 +3043,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     foreach (string s in lines)
                     {
                         string[] arg = s.Split('<');
+
+
+                        //added firstRun setting, for things we only want to do once per installation
+                        if (arg[1] == "firstRun" && Convert.ToInt32(arg[0]) == 0)
+                                {
+                                    firstRun = false;
+                                }
+
 
                         // Object prop = this.GetType().GetProperty(arg[1].GetType().GetProperties();
                         // string  test = this.GetType().GetProperty(arg[1]).GetType().ToString();
@@ -3339,6 +3329,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             // MessageBox.Show("Checking if sdk tools beta is installed in: \n" + steam_dir + tf_common_path + "bin\\");
             // return true;
             // steam_dir + tf_common_path + "tf\\"
+
 
             //hlmv++ workaround
             if (cb_hlmvplusplus_mode.Checked)
@@ -5028,30 +5019,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 //slightly different error messages depending if the user is already overriding the default key or not
                 if (steam_api_key != internal_steam_api_key)
                 {
-                    MessageBox.Show("Failed to get items_game URL. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, your API Key may be invalid.\n\nYou can set or update your API Key in the settings tab.", "Error");
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, your API Key (" + settings_dir + "api_key.ini) may be invalid.", "Error");
                 }
                 else
                 {
-                MessageBox.Show("Failed to get items_game URL. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, the built-in API Key may have expired.\n\nYou can set your own API Key in the settings tab.", "Error"); // + e.Message
+                MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.", "Error"); // + e.Message
                 }
 
-                //todo:api
 
-
-                //don't jump to the tab at all.
-                /*
-                //dont jump to the tab unless the schema is done loading.
-                if (!bgWorker_load_schema.IsBusy)
-                {
-                    panel_APIKey.Visible = true;
-
-                    tabControl.SelectedIndex = 1;
-
-                    txtb_API_Key.Focus();
-                    txtb_API_Key.SelectionStart = txtb_API_Key.TextLength;
-                    txtb_API_Key.SelectionLength = 0;
-                }
-                */
 
                 return false;
             }
@@ -5586,36 +5561,17 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
             catch (WebException e)
             {
+                // failed to download
 
-                    MessageBox.Show("Could not download schema, the item server did not respond. \n(" + e.Message.ToString() + "). \n\nServer might be down/offline, please try again in a few minutes.\n\nIf this error persists, you can set a custom API Key on the Settings page.", "Error");
-
-                
-                        // failed to download
-
-                        //slightly different error messages depending if the user is already overriding the default key or not
-                        if (steam_api_key != internal_steam_api_key)
-                        {
-                            MessageBox.Show("Could not download schema, failed to get items_game URL. \n(" + e.Message.ToString() + "). \n\nThe API Key may be invalid.\n\nYou can set an API Key on the settings tab.", "Error"); // + e.Message
-                        }
-                        else
-                        {
-                            MessageBox.Show("Could not download schema, the item server did not respond. \n(" + e.Message.ToString() + "). \n\nServer might be down/offline, please try again in a few minutes.\n\nIf this error persists, you can set a custom API Key on the Settings page.", "Error");
-                        }
-
-                //set controls on main thread...
-                tabControl.BeginInvoke((Action)(() => tabControl.SelectedIndex = 1));
-                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.Focus()));
-                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionStart = txtb_API_Key.TextLength));
-                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionLength = 0));
-
-                        panel_APIKey.BeginInvoke((Action)(() => panel_APIKey.Visible = true));
-
-                        bgWorker_download_schema.CancelAsync();
-                
-
-                        //return;
-
-                //}
+                //slightly different error messages depending if the user is already overriding the default key or not
+                if (steam_api_key != internal_steam_api_key)
+                {
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, your API Key (" + settings_dir + "api_key.ini) may be invalid.", "Error");
+                }
+                else
+                {
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.", "Error"); // + e.Message
+                }
 
                 return;
             }
@@ -5675,34 +5631,18 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
             catch (WebException e)
             {
-                if (e.Message.Contains("Internal Server Error"))
+                // failed to download
+
+                //slightly different error messages depending if the user is already overriding the default key or not
+                if (steam_api_key != internal_steam_api_key)
                 {
-                    MessageBox.Show("Could not download schema.vdf, the item server did not respond, \nserver might be down/offline, please try again in a few minutes.", "Error");
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, your API Key (" + settings_dir + "api_key.ini) may be invalid.", "Error");
                 }
                 else
                 {
-                    // failed to download
-
-                    //slightly different error messages depending if the user is already overriding the default key or not
-                    if (steam_api_key != internal_steam_api_key)
-                    {
-                        MessageBox.Show("Failed to get items_game URL. The API Key may be invalid.\n\nYou can set an API Key at the bottom of the settings tab.", "Error"); // + e.Message
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed to get items_game URL. The built-in API Key may have expired.\n\nYou can set your own API Key at the bottom of the settings tab.", "Error"); // + e.Message
-                    }
-
-                    //set controls on main thread...
-                    tabControl.BeginInvoke((Action)(() => tabControl.SelectedIndex = 1));
-                    txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.Focus()));
-                    txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionStart = txtb_API_Key.TextLength));
-                    txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionLength = 0));
-
-                    panel_APIKey.BeginInvoke((Action)(() => panel_APIKey.Visible = true));
-
-                    bgWorker_download_schema.CancelAsync();
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.", "Error"); // + e.Message
                 }
+
                 return;
             }
 
@@ -5727,36 +5667,18 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 }
                 catch (WebException e)
                 {
-                    if (e.Message.Contains("Internal Server Error"))
+                    // failed to download
+
+                    //slightly different error messages depending if the user is already overriding the default key or not
+                    if (steam_api_key != internal_steam_api_key)
                     {
-                        MessageBox.Show("Could not download schema.vdf, the item server did not respond, \nserver might be down/offline, please try again in a few minutes.", "Error");
+                        MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, your API Key (" + settings_dir + "api_key.ini) may be invalid.", "Error");
                     }
                     else
                     {
-
-                        // failed to download
-
-                        //slightly different error messages depending if the user is already overriding the default key or not
-                        if (steam_api_key != internal_steam_api_key)
-                        {
-                            MessageBox.Show("Failed to get items_game URL. The API Key may be invalid.\n\nYou can set an API Key at the bottom of the settings tab.", "Error"); // + e.Message
-                        }
-                        else
-                        {
-                            MessageBox.Show("Failed to get items_game URL. The built-in API Key may have expired.\n\nYou can set your own API Key at the bottom of the settings tab.", "Error"); // + e.Message
-                        }
-
-                        //set controls on main thread...
-                        tabControl.BeginInvoke((Action)(() => tabControl.SelectedIndex = 1));
-                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.Focus()));
-                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionStart = txtb_API_Key.TextLength));
-                        txtb_API_Key.BeginInvoke((Action)(() => txtb_API_Key.SelectionLength = 0));
-
-                        panel_APIKey.BeginInvoke((Action)(() => panel_APIKey.Visible = true));
-
-                        bgWorker_download_schema.CancelAsync();
-
+                        MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.", "Error"); // + e.Message
                     }
+
                     return;
                 }
 
@@ -10676,13 +10598,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            /*
-            //lock out API key whenever user changes tab
-            if (chkHideAPIKey.Checked)
-            {
-                txtb_API_Key.UseSystemPasswordChar = true;
-            }
-            */
 
             int fheight = this_height;
             if (btn_expand_item_list.Text == "-") { fheight = this_height_extended; }
@@ -11238,11 +11153,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
         }
 
-        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            linkLabel2.LinkVisited = true;
-            System.Diagnostics.Process.Start("https://steamcommunity.com/dev/apikey");
-        }
 
         // checks tf/custom/ contents to see if custom mods are installed and warns user if they want to disable mods while using TFMV
         private void check_custom_mods()
@@ -12466,49 +12376,10 @@ End Class
         {
         }
 
-        private void chk_API_Key_CheckedChanged(object sender, EventArgs e)
-        {
-            return;
-            //MessageBox.Show("make this work!");
-            //txtb_API_Key.Text = "";
-
-            if (chk_HideAPIKey.Checked)
-            {
-                txtb_API_Key.UseSystemPasswordChar = true;
-                //txtb_API_Key.Enabled = true;
-                //txtb_API_Key.BackColor = Color.WhiteSmoke;
-
-                string txtb_API_Key_Text = txtb_API_Key.Text;
-
-                //check if it's a 32 character Alphanumerical string. as soon as it is, try to save it
-                //if (txtb_API_Key_Text.Length == 32 && Regex.IsMatch(txtb_API_Key_Text, "^[a-zA-Z0-9]*$"))
-                //{
-                //    steam_api_key = txtb_API_Key.Text;
-                //    SaveAPIKey();
-                //}
-
-            }
-            else
-            {
-                txtb_API_Key.UseSystemPasswordChar = false;
-                //txtb_API_Key.Enabled = false;
-                //txtb_API_Key.BackColor = Color.Gainsboro;
-                //steam_api_key = internal_steam_api_key;
-            }
-
-            settings_save(sender, e);
-        }
 
         private void panel_hlmv_settings_Paint(object sender, PaintEventArgs e)
         {
 
-        }
-
-        //unlock API key textbox when clicked
-        private void txtb_API_Key_Enter(object sender, EventArgs e)
-        {
-            //txtb_API_Key.UseSystemPasswordChar = false;
-            txtb_API_Key.PasswordChar = '\0';
         }
 
         private void list_view_MouseClick_1(object sender, MouseEventArgs e)
@@ -12703,35 +12574,6 @@ End Class
             settings_save(sender, e);
         }
 
-        private void txtb_API_Key_Leave(object sender, EventArgs e)
-        {
-            //txtb_API_Key.UseSystemPasswordChar = true;
-            txtb_API_Key.PasswordChar = '●';
-
-
-            string txtb_API_Key_Text = txtb_API_Key.Text;
-
-            //check if it's a 32 character Alphanumerical string. as soon as it is, try to save it
-            if (txtb_API_Key_Text.Length == 32 && Regex.IsMatch(txtb_API_Key_Text, "^[a-zA-Z0-9]*$"))
-            {
-                steam_api_key = txtb_API_Key.Text;
-                SaveAPIKey();
-            }
-            else
-            {
-                MessageBox.Show("Invalid API key. Please see the instructions on the right.");
-            }
-        }
-
-        private void txtb_API_Key_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            //press enter to exit the textbox, Leave will check if it's valid and save it.
-            if (e.KeyChar == (char)Keys.Enter)
-            {
-                this.ActiveControl = null;
-                txtb_API_Key_Leave(sender, e);
-            }
-        }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
@@ -12768,8 +12610,6 @@ End Class
 
         //neodement:
         //load API key from "api_key.ini"
-
-        //(disabled error messages, just use the built-in one if it exists)
         private string LoadAPIKey()
         {
             try
@@ -12777,38 +12617,24 @@ End Class
                 string LoadedAPIKey = File.ReadAllText(app_data_dir + "api_key.ini");
 
                 //check if it's a 32 character Alphanumerical string
-                if (LoadedAPIKey.Length == 32 && Regex.IsMatch(LoadedAPIKey, "^[a-zA-Z0-9]*$"))
+                if (LoadedAPIKey.Length == 32 && Regex.IsMatch(LoadedAPIKey, "^[a-zA-Z0-9]*$") || LoadedAPIKey.Length == 0)
                 {
                     return LoadedAPIKey;
                 }
                 else
                 {
-                    //MessageBox.Show("Failed to load API key from file (invalid key).\nPlease set your API Key at the bottom of the settings window.");
+                    MessageBox.Show("Failed to load API key from " + settings_dir + "api_key.ini (invalid key).\n\nThe internal API key will be used for the rest of the session.");
                     return "";
                 }
             }
+            //if api_key.ini doesn't exist, return nothing
             catch
             {
-                //MessageBox.Show("Failed to load API key from file (api_key.ini couldn't be loaded).\nPlease set your API Key at the bottom of the settings window.");
                 return "";
             }
         }
 
 
-        //neodement:
-        //save API key to "api_key.ini"
-        private void SaveAPIKey()
-        {
-
-            try
-            {
-                 File.WriteAllText(app_data_dir + "api_key.ini", steam_api_key);
-            }
-            catch
-            {
-                MessageBox.Show("Failed to save API key to file.");
-            }
-        }
 
 
         /*
