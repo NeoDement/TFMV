@@ -1,4 +1,4 @@
-# TFMV Neo 0.61
+# TFMV Neo 0.7
 Team Fortress 2 Model Viewer
 
 DOWNLOAD HERE: https://github.com/NeoDement/TFMV/releases
@@ -9,24 +9,75 @@ PATCH NOTES:
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-0.61 (01/09/2023)
+   0.7 (02/24/2025)
 _______________________________________________________________________________________________________________________
 
+New BETA feature: The jiggle bone editor!
+
+To use the jiggle bone editor, load a model the way you usually would, and then on the Skins page press "Edit jiggle bone".
+The button will only be available if the model already has some jiggle bones.
+
+
+Known issues/notes:
+
+
+-The "Select Current" does not automatically scroll to the selected bone, it just selects it.
+
+-Refreshing HLMV can take a long time. The fastest way to test and edit jiggle bones on a hat may be to load it as a stand-alone item with no class.
+
+-The QC output window is read-only. Edit the values on the left to change the text in the QC window.
+
+-The default, minimum and maximum values for each jiggle bone parameter could be improved.
+
+
+Other Improvements:
+
+
+-Added some more options to the item right click menu. Right click any item in the main list view to copy the name or model path, add it to the loadout as an item or main model, or or search the Wiki using the item name. 
+
+-Added "HLMV++ Mode" checkbox to the settings page. If you have HLMV++ installed, you can check this box to load it instead of HLMV.
+
+-Removed "Fix player model wrist visual bug" checkbox while "HLMV++ Mode" is checked. HLMV++ fixes this in a more accurate way.
+
+-Fixed a bug causing the Paint Chart Tool cancel button to become visible when loading the Workshop tab.
+
+-Replaced message telling user they can't generate large mosaic paint charts with a warning, allowing users to generate larger charts if they want to.
+
+-Renamed custom "TFMV" directory to "!TFMV" so it takes alphabetical priority over most custom content folders.
+
+-Fixed the fake bodygroup loading added in 0.6, that never worked correctly. This means you can now use the Gunslinger, Gentle Manne's Service Medal, Purity Fist, Sydney Sleeper and all tf_weapon_compound_bow weapons as intended.
+-Fixed bug causing Festive Buff Banner pack to use the non-Festive model.
+
+-Models in the "Main" slot now show up on the Skins page (unless they're player models, which are handled differently).
+
+-Fixed Camera, Window and Light textboxes. It was possible to enter invalid data and render TFMV inoperable without manually editing settings.ini.
+
+-Removed API Key setting. If you need to set a custom API key, you can still do so by editing "\TFMV\config\api_key.ini".
+
+
+_______________________________________________________________________________________________________________________
+
+   0.61 (01/09/2023)
+_______________________________________________________________________________________________________________________
 
 -Fixed left-over debug message popping up when changing bodygroup checkboxes (thanks Papyesh!)
 
+
 MISSED NOTES FROM PREVIOUS RELEASE:
+
 
 -Disabled an unnecessary automatic fix to Workshop zip files, as advised by Neodos.
 
 -Fixed some grammar/typos.
 
+
 _______________________________________________________________________________________________________________________
 
-0.6 (01/08/2023)
+   0.6 (01/08/2023)
 _______________________________________________________________________________________________________________________
 
 BODYGROUP FIXES:
+
 
 -Fixed the Gunslinger not showing up as a valid item.
 
@@ -40,14 +91,18 @@ BODYGROUP FIXES:
 
 -Fixed the Short Circuit not hiding the rightarm bodygroup.
 
+
 TURNTABLE GENERATOR IMPROVEMENTS:
+
 
 -Added an option to output as an image sequence instead of an animated GIF, so you can compress it yourself.
 (in a future update, there will hopefully be some better GIF compression options)
 
 -Reworked settings.
 
+
 ITEM LIST IMPROVEMENTS:
+
 
 -Improved search functionality. The displayed name is now searched instead of only the internal name, which should make it behave more like expected.
 
@@ -58,9 +113,12 @@ ITEM LIST IMPROVEMENTS:
 -Fixed Workshop tab occasionally stopping part way through the loading process, when encountering a corrupt zip.
 
 -Added option to download additional medals. These medals will show up under their own Medal item filter type.
+
 (This only shows medals with unique models, duplicates are currently skipped for performance reasons.)
 
+
 OTHER IMPROVEMENTS:
+
 
 -Added options to choose which Class and Slot (ie Primary, Cosmetic) are selected on startup.
 
@@ -71,11 +129,11 @@ OTHER IMPROVEMENTS:
 
 -Many other minor improvements.
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
 
-0.5 (10/19/2022)
-   
--------------------------------------------------------------------------------------------------------------------------------------------------------
+_______________________________________________________________________________________________________________________
+
+   0.5 (10/19/2022)
+_______________________________________________________________________________________________________________________
 
 -Fixed items from Workshop zips showing as error models when disable jigglebones is unchecked and the files don't exist locally (thanks Tabby!)
 
@@ -87,21 +145,21 @@ OTHER IMPROVEMENTS:
 
 -Added button to view the TFMV Neo Github to About tab.
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
 
-0.4 (10/18/2022)
-   
--------------------------------------------------------------------------------------------------------------------------------------------------------
+_______________________________________________________________________________________________________________________
+
+   0.4 (10/18/2022)
+_______________________________________________________________________________________________________________________
 
 -Fixed a bug preventing HLMV from starting up relating to the HLMV recent files list change from 0.1 (thanks Wurlmon!)
 
 -Updated exe assembly information (TFMV Neo 0.3 was mistakenly referred to as TFMV 1.9 - Community Edition).
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
 
-0.3 (10/18/2022)
-   
--------------------------------------------------------------------------------------------------------------------------------------------------------
+_______________________________________________________________________________________________________________________
+
+   0.3 (10/18/2022)
+_______________________________________________________________________________________________________________________
 
 NEW FEATURES:
 
@@ -111,10 +169,11 @@ NEW FEATURES:
 
 -Added option to expand item list on startup.
 
--Added option to replace default Valve cubemap with one from 2fort. This feature will be expanded upon in the next release.
+-Added option to replace default Valve cubemap with one from 2fort. This feature will be expanded upon in a future release.
 
 
 IMPROVEMENTS:
+
 
 -Updated "Save current as default" button to also save Light and Background color settings.
 
@@ -123,37 +182,35 @@ IMPROVEMENTS:
 -Added reset buttons to Background and Window settings.
 
 -Improved fixed head texture mipmap functionality. Now TFMV fixes them automatically instead of storing uncompressed versions of the head textures.
-
 -Made some non-tournament medals visible in the item selection panel. Notably, this prevents the Made Man not appearing in Spy's list of cosmetic items.
-
 (the Gentle Manne's Service Medal, Employee Badges and Dueling Badges are still disabled for now)
 
+
 OTHER CHANGES:
+
 
 -Fixed a bug preventing the TFMV folder in the Custom folder from being deleted when closing TFMV.
 
 -Removed PDA2 item filter type. It didn't work properly and both PDA2 items in the game are duplicates of existing items. The Taunt Prop filter replaces it.
-
 -Changed default HLMV window size to 800x600.
 
 -Added warning/instructions when a user attempts to load a Voodoo-Cursed Zombie Soul.
 
 -Added "Latest Patch Notes" to About tab.
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
 
-0.2 (05/08/2022)
-   
--------------------------------------------------------------------------------------------------------------------------------------------------------
+_______________________________________________________________________________________________________________________
+
+   0.2 (05/08/2022)
+_______________________________________________________________________________________________________________________
 
 -TFMV now asks for an API Key the first time you launch it, so you're no longer relying on a key that could be invalidated at some point in the future.
 
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
+_______________________________________________________________________________________________________________________
 
-0.1 (05/06/2022)
-   
--------------------------------------------------------------------------------------------------------------------------------------------------------
+   0.1 (05/06/2022)
+_______________________________________________________________________________________________________________________
 
 -TFMV now auto-installs fixed head textures into the custom folder when putting a loadout into HLMV (no more pixelated eyebrows!)
 
