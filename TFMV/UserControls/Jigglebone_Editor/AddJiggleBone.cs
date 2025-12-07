@@ -1277,11 +1277,11 @@ namespace TFMV.UserControls.Jigglebone_Editor
                     //'line += MathModule.RadiansToDegrees(theJiggleBone.baseMaxLeft);
 
                     //todo: so do these need to converted?
-                    line += SingleToString(theJiggleBone.baseLeftConstraintMin, true);
+                    line += SingleToString(theJiggleBone.baseLeftConstraintMin, false);
 
                     line += " ";
 
-                    line += SingleToString(theJiggleBone.baseLeftConstraintMax, true);
+                    line += SingleToString(theJiggleBone.baseLeftConstraintMax, false);
 
                     line += NewLine;
                     QC_output += line;
@@ -1310,11 +1310,11 @@ namespace TFMV.UserControls.Jigglebone_Editor
 
                     //'line += MathModule.RadiansToDegrees(theJiggleBone.baseMaxUp);
 
-                    line += SingleToString(theJiggleBone.baseUpConstraintMin, true);
+                    line += SingleToString(theJiggleBone.baseUpConstraintMin, false);
 
                     line += " ";
 
-                    line += SingleToString(theJiggleBone.baseUpConstraintMax, true);
+                    line += SingleToString(theJiggleBone.baseUpConstraintMax, false);
 
                     line += NewLine;
                     QC_output += line;
@@ -1343,11 +1343,11 @@ namespace TFMV.UserControls.Jigglebone_Editor
 
                     //'line += MathModule.RadiansToDegrees(theJiggleBone.baseMaxForward);
 
-                    line += SingleToString(theJiggleBone.baseForwardConstraintMin, true);
+                    line += SingleToString(theJiggleBone.baseForwardConstraintMin, false);
 
                     line += " ";
 
-                    line += SingleToString(theJiggleBone.baseForwardConstraintMax, true);
+                    line += SingleToString(theJiggleBone.baseForwardConstraintMax, false);
 
                     line += NewLine;
                     QC_output += line;
