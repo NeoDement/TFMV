@@ -26,6 +26,7 @@ using TFMV.Functions;
 using TFMV.UserControls.Loadout;
 //using System.Windows.Shapes;
 using System.Xml.Linq;
+using System.Management.Instrumentation;
 
 
 namespace TFMV
@@ -36,10 +37,10 @@ namespace TFMV
         // Steam api key 
         // this key is necesary in order to download the TF2's item schema from Valve's servers
         // you can get your steam api key here: https://steamcommunity.com/dev/apikey
-        // http://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=" + steam_api_key +"&format=vdf"
+        // https://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=" + steam_api_key +"&format=vdf"
         //        private string steam_api_key = "6D9639EF4883824D5E277DC3E57077D8";
-        //        private string steam_api_key = "http://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=6D9639EF4883824D5E277DC3E57077D8";
-        //        http://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=
+        //        private string steam_api_key = "https://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=6D9639EF4883824D5E277DC3E57077D8";
+        //        https://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=
 
 
         //this is an API key tied to a dummy Steam account (https://steamcommunity.com/id/tfmvdummy/)
@@ -1194,13 +1195,31 @@ namespace TFMV
             List<Process> HLMV_processlist = new List<Process>();
             List<Process> TFMV_processlist = new List<Process>();
 
+            //used to modify "multiple hlmvs are running" message
+            string plusplus = "";
+
             Process[] processlist = Process.GetProcesses();
             foreach (Process theprocess in processlist)
             {
-                if (theprocess.ProcessName == "hlmv")
+
+                //neodement: look for hlmv++ process if hlmv++ mode is checked
+
+                if (cb_hlmvplusplus_mode.Checked)
                 {
-                    HLMV_processlist.Add(theprocess);
+                    if (theprocess.ProcessName == "hlmvplusplus")
+                    {
+                        plusplus = "++";
+                        HLMV_processlist.Add(theprocess);
+                    }
                 }
+                else
+                {
+                    if (theprocess.ProcessName == "hlmv")
+                    {
+                        HLMV_processlist.Add(theprocess);
+                    }
+                }
+
 
                 if ((theprocess.ProcessName == "TFMV") && (theprocess.Id != TFMV_process_id))
                 {
@@ -1239,7 +1258,7 @@ namespace TFMV
                 #endregion
 #endif
 
-                DialogResult dialogResult = MessageBox.Show("Other HLMV (Half Life Model Viewer) are running. \nNo other instances should be running while using TFMV.\n\n Close other HLMV processes? ", "TFMV", MessageBoxButtons.YesNo);
+                DialogResult dialogResult = MessageBox.Show("Another instance of HLMV" + plusplus + " is running. \nNo other instances should be running while using TFMV.\n\n Close other HLMV" + plusplus +  " processes?", "TFMV", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
                 {
                     for (int i = 0; i < HLMV_processlist.Count; i++)
@@ -1256,7 +1275,7 @@ namespace TFMV
                         }
                         catch (Exception e)
                         {
-                            MessageBox.Show("Could not close hlmv process: " + e);
+                            MessageBox.Show("Could not close HLMV process: " + e);
                         }
                     }
                 }
@@ -1270,7 +1289,7 @@ namespace TFMV
 
             if (TFMV_processlist.Count > 0)
             {
-                DialogResult dialogResult = MessageBox.Show("Other TFMV are running. \nNo other instances should be running while using TFMV.\n\n Close other TFMV processes? ", "TFMV", MessageBoxButtons.YesNo);
+                DialogResult dialogResult = MessageBox.Show("Another instance if TFMV is running. \nNo other instances should be running while using TFMV.\n\n Close other TFMV processes?", "TFMV", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
                 {
                     for (int i = 0; i < TFMV_processlist.Count; i++)
@@ -3347,7 +3366,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
             else
             { 
-                if (File.Exists(steamGameConfig.tf2_dir + "bin\\hlmv.exe"))
+                if (File.Exists(steamGameConfig.tf2_dir + "bin\\hlmv.exe")) // || File.Exists(steamGameConfig.tf2_dir + "bin\\x64\\hlmv.exe")
                 {
                     return true;
                 }
@@ -3740,9 +3759,10 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
 
             #region setup
-
-            int icons_per_row = 10;
-            int icons_per_collumn = 4;
+            
+            //todo: FIX THIS AWFUL CODE
+            int icons_per_row = 10; //10
+            int icons_per_collumn = 4; //4
             int icons_count = icons_per_row * icons_per_collumn;
 
             // calculate image resolution for paints mosaic (9x4 images of hlmv_size X by Y)
@@ -3785,7 +3805,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             Bitmap preview_moasic_image = new Bitmap(mosaic_image_resolution.X, mosaic_image_resolution.Y, PixelFormat.Format32bppPArgb);
             Graphics graphics_preview = Graphics.FromImage(preview_moasic_image);
-            preview_moasic_image = null; //kill it for perf
 
             int img_row = 0;
             int img_collumn = 0;
@@ -4458,7 +4477,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             {
                 using (WebClient client = new WebClient())
                 {
-                    string htmlCode = client.DownloadString("http://steamcommunity.com/sharedfiles/filedetails/?id=158547475");
+                    string htmlCode = client.DownloadString("https://steamcommunity.com/sharedfiles/filedetails/?id=158547475");
                 }
             } catch {
                 MessageBox.Show("Could not open web browser to load the TFMV guide.\nPlease check the TFMV guide for new versions of the tool at: https://steamcommunity.com/sharedfiles/filedetails/?id=158547475 ");
@@ -5001,14 +5020,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             string schemaURL_path = schema_dir + "items_game_URL.txt";
             string items_game_URL = "";
-
+            
             // get latest schema version number
             try
             {
                 using (WebClient Client = new WebClient())
                 {
 
-                    Client.DownloadFile("http://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=" + steam_api_key + "&format=vdf", schemaURL_path_latest);
+                    Client.DownloadFile("https://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=" + steam_api_key + "&format=vdf", schemaURL_path_latest);
                     Client.Dispose();
                 }
             }
@@ -5023,12 +5042,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 }
                 else
                 {
-                MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.", "Error"); // + e.Message
+                MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\n" + e.Message, "Error");
                 }
 
+            
 
 
-                return false;
+
+            return false;
             }
 
             // check that file exists
@@ -5556,7 +5577,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 using (WebClient Client = new WebClient())
                 {
                     Client.UseDefaultCredentials = true;
-                    Client.DownloadFile("http://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=" + steam_api_key + "&format=vdf", schemaURL_path);
+                    Client.DownloadFile("https://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=" + steam_api_key + "&format=vdf", schemaURL_path);
                 }
             }
             catch (WebException e)
@@ -5570,7 +5591,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 }
                 else
                 {
-                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.", "Error"); // + e.Message
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\n" + e.Message, "Error");
                 }
 
                 return;
@@ -5626,7 +5647,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 using (WebClient Client = new WebClient())
                 {
                     Client.UseDefaultCredentials = true;
-                    Client.DownloadFile(new Uri("http://api.steampowered.com/IEconItems_440/GetSchemaItems/v1/?key=" + steam_api_key + "&format=vdf"), schema_dir + "schema.vdf");
+                    Client.DownloadFile(new Uri("https://api.steampowered.com/IEconItems_440/GetSchemaItems/v1/?key=" + steam_api_key + "&format=vdf"), schema_dir + "schema.vdf");
                 }
             }
             catch (WebException e)
@@ -5640,7 +5661,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 }
                 else
                 {
-                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.", "Error"); // + e.Message
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\n" + e.Message, "Error");
                 }
 
                 return;
@@ -5662,7 +5683,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     using (WebClient Client = new WebClient())
                     {
                         Client.UseDefaultCredentials = true;
-                        Client.DownloadFile(new Uri("http://api.steampowered.com/IEconItems_440/GetSchemaItems/v1/?key=" + steam_api_key + "&start=" + next_val + "&format=vdf"), schema_dir + "schema_" + file_num.ToString() + ".vdf");
+                        Client.DownloadFile(new Uri("https://api.steampowered.com/IEconItems_440/GetSchemaItems/v1/?key=" + steam_api_key + "&start=" + next_val + "&format=vdf"), schema_dir + "schema_" + file_num.ToString() + ".vdf");
                     }
                 }
                 catch (WebException e)
@@ -5676,7 +5697,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     }
                     else
                     {
-                        MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.", "Error"); // + e.Message
+                        MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\n" + e.Message, "Error");
                     }
 
                     return;
@@ -7941,6 +7962,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
 
             int max_models = 12;
+
+            // reset attachments // better delete the whole thing though
+            for (int i = 0; i < max_models; i++)
+            {
+                key.SetValue("merge" + (i + 1), "");
+            }
+
+
             // Add TFMV background model if its enabled in the screenshot settings
             //neodement: if "Disable Background" is checked, don't load it
             if (cb_screenshot_transparency.Checked && !cb_disable_background.Checked)
@@ -7948,12 +7977,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 max_models = 11;
                 // set 12th attachment as TFMV background
                 key.SetValue("merge" + (12), @"models\TFMV\tfmv_bg.mdl");
-            }
-
-            // reset attachments // better delete the whole thing though
-            for (int i = 0; i < max_models; i++)
-            {
-                key.SetValue("merge" + (i + 1), "");
             }
 
             // HLMV model attachments 12 max
@@ -8065,7 +8088,15 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
             else
             {
-                exename = steamGameConfig.tf2_dir + "bin\\hlmv.exe";
+                //load 64 bit hlmv if available
+                if (File.Exists(steamGameConfig.tf2_dir + "bin\\x64\\hlmv.exe"))
+                { 
+                    exename = steamGameConfig.tf2_dir + "bin\\x64\\hlmv.exe";
+                }
+                else
+                {
+                    exename = steamGameConfig.tf2_dir + "bin\\hlmv.exe";
+                }
             }
 
             proc_HLMV = new Process
@@ -9492,6 +9523,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             // pick the model directory path, making sure its not "materials/models"
             for (int i = 0; i < list_mdl_dirs.Length; i++)
             {
+                //todo: will this break if an item is called "materials"...?
                 if (list_mdl_dirs[i].Contains("materials") == false)
                 {
                     if (list_mdl_dirs[i] != "")
@@ -10381,6 +10413,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         private void btn_screenshot_Click(object sender, EventArgs e)
         {
 
+
+
             if ((proc_HLMV == null) || (proc_HLMV.HasExited))
             {
                 //MessageBox.Show("Cannot resize window, HLMV is not running.");
@@ -10509,7 +10543,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             {
                 string SearchItemName = (list_view.SelectedItems[0].Text.Split('(')[0].Replace(" ", "_"));
 
-                Process.Start("http://wiki.teamfortress.com/wiki/Special:Search/" + SearchItemName);
+                Process.Start("https://wiki.teamfortress.com/wiki/Special:Search/" + SearchItemName);
 
             }
             catch (Exception) { }
@@ -11201,7 +11235,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
         private void logoPictureBox_Click(object sender, EventArgs e)
         {
-            logoPictureBox.Image = new Bitmap(TFMV.Properties.Resources.TFMV_neo_logo);
+            //logoPictureBox.Image = new Bitmap(TFMV.Properties.Resources.TFMV_neo_logo);
         }
 
         private void panel11_Paint(object sender, PaintEventArgs e)
@@ -12386,8 +12420,26 @@ End Class
         {
             if (e.Button == MouseButtons.Right)
             {
-                if (!supress_TF2Item_ContextMenu)
+
+                if (supress_TF2Item_ContextMenu)
                 {
+                    copyMDLPathToolStripMenuItem.Visible = false;
+                    copyZIPPathToolStripMenuItem.Visible = true;
+
+                    toolStripSeparator2.Visible = false;
+
+                    viewOnTF2WikiToolStripMenuItem.Visible = false;
+                }
+                else
+                {
+                    copyMDLPathToolStripMenuItem.Visible = true;
+                    copyZIPPathToolStripMenuItem.Visible = false;
+
+                    toolStripSeparator2.Visible = true;
+
+                    viewOnTF2WikiToolStripMenuItem.Visible = true;
+                }
+
                     int focusedItem = list_view.FocusedItem.Index;
                     if (focusedItem >= 0 && list_view.Items[focusedItem].Bounds.Contains(e.Location))
                     {
@@ -12395,7 +12447,7 @@ End Class
                         menu_TF2Item.Tag = focusedItem;
                         menu_TF2Item.Show(Cursor.Position);
                     }
-                }
+                
             }
         }
 
@@ -12426,7 +12478,10 @@ End Class
         {
             ExtdListViewItem item = (ExtdListViewItem)list_view.Items[(int)menu_TF2Item.Tag];
 
-            Clipboard.SetText(item.Text);
+            if (item.Text != null && item.Text != "")
+            {
+                Clipboard.SetText(item.Text);
+            }
         }
 
 
@@ -12434,8 +12489,24 @@ End Class
         {
             ExtdListViewItem item = (ExtdListViewItem)list_view.Items[(int)menu_TF2Item.Tag];
 
-            Clipboard.SetText(item.model_path);
+            if (item.model_path != null && item.model_path != "")
+            {
+                Clipboard.SetText(item.model_path);
+            }
         }
+
+        //alternate copy path button for Workshop items
+        private void copyZIPPathToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExtdListViewItem item = (ExtdListViewItem)list_view.Items[(int)menu_TF2Item.Tag];
+
+            if (item.workshop_zip_path != null && item.workshop_zip_path != "")
+            {
+                Clipboard.SetText(item.workshop_zip_path);
+            }
+        }
+
+
 
         private void viewOnTF2WikiToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -12443,7 +12514,10 @@ End Class
 
             string SearchItemName = (item.Text.Split('(')[0].Replace(" ", "_"));
 
-            Process.Start("http://wiki.teamfortress.com/wiki/Special:Search/" + SearchItemName);
+            if (SearchItemName != null && SearchItemName != "")
+            {
+                Process.Start("https://wiki.teamfortress.com/wiki/Special:Search/" + SearchItemName);
+            }
         }
 
         private void lab_tf2_itemlist_Click(object sender, EventArgs e)
@@ -12474,7 +12548,7 @@ End Class
                 Loadout_Item item = (Loadout_Item)loadout_list.Controls[i];
 
                 //select the one we are adding to the main slot
-                if (item.item_id == current_item.item_id)
+                if (item.item_id == current_item.item_id || (current_item.workshop_zip_path != null && current_item.workshop_zip_path != "" && current_item.workshop_zip_path == item.workshop_zip_path))
                 {
                     item._selected = true;
                 }
@@ -12537,36 +12611,47 @@ End Class
                 cb_fix_hlp_bones.Checked = false;
                 cb_fix_hlp_bones.Enabled = false;
                 cb_fix_hlp_bones.Visible = false;
+
+                //cb_screenshot_transparency.Checked = false;
+                //cb_screenshot_transparency.Enabled = false;
+
+                if (cb_screenshot_transparency.Checked && tabControl.SelectedTab == Settings)
+                {
+                    MessageBox.Show("Warning!\n\nBecause of your settings, the \"Make Transparent Screenshot...\" option in HLMV++ will not work correctly.\n\nIf you wish to take transparent screenshots directly from HLMV++, please uncheck \"Transparent background\" below.");
+                }
+
+                if (Process_IsRunning(proc_HLMV))
+                {
+                    MessageBox.Show("HLMV will need to be closed to continue.");
+                    close_hlmv();
+                }
             }
             else
             {
                 cb_fix_hlp_bones.Checked = true;
                 cb_fix_hlp_bones.Enabled = true;
                 cb_fix_hlp_bones.Visible = true;
+
+                //cb_screenshot_transparency.Enabled = true;
+
+                if (Process_IsRunning(proc_HLMV))
+                {
+                    MessageBox.Show("HLMV++ will need to be closed to continue.");
+                    close_hlmv();
+                }
             }
+
+
+
         }
 
         private void textbox_text_to_double(object sender, EventArgs e)
         {
             TextBox textbox = sender as TextBox;
-            double number = 0;
+            if (textbox == null) return;
 
-            double.TryParse(textbox.Text, out number);
-
-            int i = Convert.ToInt32(number);
-
-            textbox.Text = i.ToString();
-            
-            //save
-            settings_save(sender, e);
-        }
-
-        private void textbox_text_to_int(object sender, EventArgs e)
-        {
-            TextBox textbox = sender as TextBox;
-            double number = 0;
-
-            double.TryParse(textbox.Text, out number);
+            if (!double.TryParse(textbox.Text, out double number))
+                number = 0;
 
             textbox.Text = number.ToString();
 
@@ -12574,6 +12659,63 @@ End Class
             settings_save(sender, e);
         }
 
+        private void textbox_text_to_int(object sender, EventArgs e)
+        {
+            TextBox textbox = sender as TextBox;
+            if (textbox == null) return;
+
+            if (!int.TryParse(textbox.Text, out int number))
+                number = 0;
+
+            textbox.Text = number.ToString();
+
+            //save
+            settings_save(sender, e);
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            //MessageBox.Show("6D9639EF4883824D5E277DC3E57077D8");
+            //MessageBox.Show(internal_steam_api_key);
+            //MessageBox.Show(steam_api_key);
+
+            //steam_api_key = "6D9639EF4883824D5E277DC3E57077D8";
+
+            //MessageBox.Show(steam_api_key);
+
+            //string internal_steam_api_key = steam_api_key;
+
+            string schemaURL_path = "C:\\Users\\6YFAF\\Documents\\steam_schema_url.txt";
+
+
+            try
+            {
+                using (WebClient Client = new WebClient())
+                {
+                    Client.UseDefaultCredentials = true;
+                    Client.DownloadFile("https://api.steampowered.com/IEconItems_440/GetSchemaURL/v1/?key=" + steam_api_key + "&format=vdf", schemaURL_path);
+                }
+            }
+            catch (WebException E)
+            {
+                // failed to download
+                //slightly different error messages depending if the user is already overriding the default key or not
+                if (steam_api_key != internal_steam_api_key)
+                {
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\nIf this error persists, your API Key (" + "settings_dir" + "api_key.ini) may be invalid.", "Error");
+                }
+                else
+                {
+                    MessageBox.Show("Could not download schema. The server may be temporarily down. Please try again in a few minutes.\n\n" + E.Message, "Error");
+                }
+                return;
+            }
+        }
+
+        private void txtb_hlmv_campos_x_TextChanged(object sender, EventArgs e)
+        {
+
+        }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {

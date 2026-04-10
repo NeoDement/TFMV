@@ -284,16 +284,19 @@
             this.txtb_hlmv_fov = new System.Windows.Forms.TextBox();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.About = new System.Windows.Forms.TabPage();
+            this.linkLabel6 = new System.Windows.Forms.LinkLabel();
+            this.logoPictureBox = new System.Windows.Forms.PictureBox();
             this.img_EasterEgg = new System.Windows.Forms.PictureBox();
             this.label44 = new System.Windows.Forms.Label();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.panel17 = new System.Windows.Forms.Panel();
+            this.label45 = new System.Windows.Forms.Label();
+            this.panel16 = new System.Windows.Forms.Panel();
             this.label43 = new System.Windows.Forms.Label();
+            this.label41 = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.linkLabel4 = new System.Windows.Forms.LinkLabel();
             this.linkLabel1 = new System.Windows.Forms.LinkLabel();
-            this.panel16 = new System.Windows.Forms.Panel();
-            this.label41 = new System.Windows.Forms.Label();
             this.panel15 = new System.Windows.Forms.Panel();
             this.label30 = new System.Windows.Forms.Label();
             this.lbl_EasterEgg = new System.Windows.Forms.Label();
@@ -301,9 +304,7 @@
             this.label24 = new System.Windows.Forms.Label();
             this.label23 = new System.Windows.Forms.Label();
             this.linkLabel5 = new System.Windows.Forms.LinkLabel();
-            this.linkLabel6 = new System.Windows.Forms.LinkLabel();
             this.linkLabel3 = new System.Windows.Forms.LinkLabel();
-            this.logoPictureBox = new System.Windows.Forms.PictureBox();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.menu_TF2Item = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -312,6 +313,7 @@
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.copyItemNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyMDLPathToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.copyZIPPathToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.viewOnTF2WikiToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.colorPicker_master = new TFMV.PaintColorPicker();
@@ -360,11 +362,11 @@
             this.vtab_loadout.SuspendLayout();
             this.tabControl.SuspendLayout();
             this.About.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.img_EasterEgg)).BeginInit();
             this.panel17.SuspendLayout();
             this.panel16.SuspendLayout();
             this.panel15.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).BeginInit();
             this.menu_TF2Item.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -857,6 +859,7 @@
             resources.ApplyResources(this.txtb_hlmv_campos_x, "txtb_hlmv_campos_x");
             this.txtb_hlmv_campos_x.Name = "txtb_hlmv_campos_x";
             this.toolTip1.SetToolTip(this.txtb_hlmv_campos_x, resources.GetString("txtb_hlmv_campos_x.ToolTip"));
+            this.txtb_hlmv_campos_x.TextChanged += new System.EventHandler(this.txtb_hlmv_campos_x_TextChanged);
             this.txtb_hlmv_campos_x.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBoxNumeric_KeyPress);
             this.txtb_hlmv_campos_x.Leave += new System.EventHandler(this.textbox_text_to_double);
             // 
@@ -2576,6 +2579,8 @@
             // About
             // 
             this.About.BackColor = System.Drawing.Color.Gainsboro;
+            this.About.Controls.Add(this.linkLabel6);
+            this.About.Controls.Add(this.logoPictureBox);
             this.About.Controls.Add(this.img_EasterEgg);
             this.About.Controls.Add(this.label44);
             this.About.Controls.Add(this.richTextBox1);
@@ -2587,11 +2592,27 @@
             this.About.Controls.Add(this.label24);
             this.About.Controls.Add(this.label23);
             this.About.Controls.Add(this.linkLabel5);
-            this.About.Controls.Add(this.linkLabel6);
             this.About.Controls.Add(this.linkLabel3);
-            this.About.Controls.Add(this.logoPictureBox);
             resources.ApplyResources(this.About, "About");
             this.About.Name = "About";
+            // 
+            // linkLabel6
+            // 
+            resources.ApplyResources(this.linkLabel6, "linkLabel6");
+            this.linkLabel6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.linkLabel6.LinkColor = System.Drawing.Color.Black;
+            this.linkLabel6.Name = "linkLabel6";
+            this.linkLabel6.TabStop = true;
+            this.linkLabel6.Tag = "https://github.com/NeoDement/TFMV";
+            this.linkLabel6.VisitedLinkColor = System.Drawing.Color.Gray;
+            this.linkLabel6.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.launch_link);
+            // 
+            // logoPictureBox
+            // 
+            resources.ApplyResources(this.logoPictureBox, "logoPictureBox");
+            this.logoPictureBox.Name = "logoPictureBox";
+            this.logoPictureBox.TabStop = false;
+            this.logoPictureBox.Click += new System.EventHandler(this.logoPictureBox_Click);
             // 
             // img_EasterEgg
             // 
@@ -2616,18 +2637,38 @@
             // panel17
             // 
             this.panel17.BackColor = System.Drawing.Color.DimGray;
-            this.panel17.Controls.Add(this.label43);
-            this.panel17.Controls.Add(this.label20);
-            this.panel17.Controls.Add(this.linkLabel4);
-            this.panel17.Controls.Add(this.linkLabel1);
+            this.panel17.Controls.Add(this.label45);
             resources.ApplyResources(this.panel17, "panel17");
             this.panel17.Name = "panel17";
+            // 
+            // label45
+            // 
+            resources.ApplyResources(this.label45, "label45");
+            this.label45.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.label45.Name = "label45";
+            // 
+            // panel16
+            // 
+            this.panel16.BackColor = System.Drawing.Color.DimGray;
+            this.panel16.Controls.Add(this.label43);
+            this.panel16.Controls.Add(this.label41);
+            this.panel16.Controls.Add(this.label20);
+            this.panel16.Controls.Add(this.linkLabel4);
+            this.panel16.Controls.Add(this.linkLabel1);
+            resources.ApplyResources(this.panel16, "panel16");
+            this.panel16.Name = "panel16";
             // 
             // label43
             // 
             resources.ApplyResources(this.label43, "label43");
             this.label43.ForeColor = System.Drawing.Color.WhiteSmoke;
             this.label43.Name = "label43";
+            // 
+            // label41
+            // 
+            resources.ApplyResources(this.label41, "label41");
+            this.label41.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.label41.Name = "label41";
             // 
             // label20
             // 
@@ -2644,7 +2685,7 @@
             this.linkLabel4.LinkColor = System.Drawing.Color.WhiteSmoke;
             this.linkLabel4.Name = "linkLabel4";
             this.linkLabel4.TabStop = true;
-            this.linkLabel4.Tag = "http://steamcommunity.com/profiles/76561197972481083";
+            this.linkLabel4.Tag = "https://steamcommunity.com/profiles/76561197972481083";
             this.linkLabel4.VisitedLinkColor = System.Drawing.Color.WhiteSmoke;
             this.linkLabel4.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.launch_link);
             // 
@@ -2657,22 +2698,9 @@
             this.linkLabel1.LinkColor = System.Drawing.Color.WhiteSmoke;
             this.linkLabel1.Name = "linkLabel1";
             this.linkLabel1.TabStop = true;
-            this.linkLabel1.Tag = "http://steamcommunity.com/profiles/76561197996543132";
+            this.linkLabel1.Tag = "https://steamcommunity.com/profiles/76561197996543132";
             this.linkLabel1.VisitedLinkColor = System.Drawing.Color.WhiteSmoke;
             this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.launch_link);
-            // 
-            // panel16
-            // 
-            this.panel16.BackColor = System.Drawing.Color.DimGray;
-            this.panel16.Controls.Add(this.label41);
-            resources.ApplyResources(this.panel16, "panel16");
-            this.panel16.Name = "panel16";
-            // 
-            // label41
-            // 
-            resources.ApplyResources(this.label41, "label41");
-            this.label41.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.label41.Name = "label41";
             // 
             // panel15
             // 
@@ -2718,20 +2746,9 @@
             this.linkLabel5.LinkColor = System.Drawing.Color.DodgerBlue;
             this.linkLabel5.Name = "linkLabel5";
             this.linkLabel5.TabStop = true;
-            this.linkLabel5.Tag = "http://steamcommunity.com/workshop/suggestserviceproviders/?appid=440";
+            this.linkLabel5.Tag = "https://steamcommunity.com/workshop/suggestserviceproviders/?appid=440";
             this.linkLabel5.VisitedLinkColor = System.Drawing.Color.Gray;
             this.linkLabel5.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.launch_link);
-            // 
-            // linkLabel6
-            // 
-            resources.ApplyResources(this.linkLabel6, "linkLabel6");
-            this.linkLabel6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.linkLabel6.LinkColor = System.Drawing.Color.Black;
-            this.linkLabel6.Name = "linkLabel6";
-            this.linkLabel6.TabStop = true;
-            this.linkLabel6.Tag = "https://github.com/NeoDement/TFMV";
-            this.linkLabel6.VisitedLinkColor = System.Drawing.Color.Gray;
-            this.linkLabel6.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.launch_link);
             // 
             // linkLabel3
             // 
@@ -2740,16 +2757,9 @@
             this.linkLabel3.LinkColor = System.Drawing.Color.Black;
             this.linkLabel3.Name = "linkLabel3";
             this.linkLabel3.TabStop = true;
-            this.linkLabel3.Tag = "http://steamcommunity.com/sharedfiles/filedetails/?id=158547475";
+            this.linkLabel3.Tag = "https://steamcommunity.com/sharedfiles/filedetails/?id=158547475";
             this.linkLabel3.VisitedLinkColor = System.Drawing.Color.Gray;
             this.linkLabel3.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.launch_link);
-            // 
-            // logoPictureBox
-            // 
-            resources.ApplyResources(this.logoPictureBox, "logoPictureBox");
-            this.logoPictureBox.Name = "logoPictureBox";
-            this.logoPictureBox.TabStop = false;
-            this.logoPictureBox.Click += new System.EventHandler(this.logoPictureBox_Click);
             // 
             // menu_TF2Item
             // 
@@ -2759,6 +2769,7 @@
             this.toolStripSeparator1,
             this.copyItemNameToolStripMenuItem,
             this.copyMDLPathToolStripMenuItem,
+            this.copyZIPPathToolStripMenuItem,
             this.toolStripSeparator2,
             this.viewOnTF2WikiToolStripMenuItem});
             this.menu_TF2Item.Name = "menu_TF2Item";
@@ -2792,6 +2803,12 @@
             this.copyMDLPathToolStripMenuItem.Name = "copyMDLPathToolStripMenuItem";
             resources.ApplyResources(this.copyMDLPathToolStripMenuItem, "copyMDLPathToolStripMenuItem");
             this.copyMDLPathToolStripMenuItem.Click += new System.EventHandler(this.copyMDLPathToolStripMenuItem_Click);
+            // 
+            // copyZIPPathToolStripMenuItem
+            // 
+            this.copyZIPPathToolStripMenuItem.Name = "copyZIPPathToolStripMenuItem";
+            resources.ApplyResources(this.copyZIPPathToolStripMenuItem, "copyZIPPathToolStripMenuItem");
+            this.copyZIPPathToolStripMenuItem.Click += new System.EventHandler(this.copyZIPPathToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
@@ -2927,6 +2944,7 @@
             this.tabControl.ResumeLayout(false);
             this.About.ResumeLayout(false);
             this.About.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.img_EasterEgg)).EndInit();
             this.panel17.ResumeLayout(false);
             this.panel17.PerformLayout();
@@ -2934,7 +2952,6 @@
             this.panel16.PerformLayout();
             this.panel15.ResumeLayout(false);
             this.panel15.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.logoPictureBox)).EndInit();
             this.menu_TF2Item.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -3009,8 +3026,6 @@
         private System.Windows.Forms.Label label20;
         private System.Windows.Forms.PictureBox logoPictureBox;
         private System.Windows.Forms.LinkLabel linkLabel3;
-        private System.Windows.Forms.Label label24;
-        private System.Windows.Forms.Label label23;
         private System.Windows.Forms.Button btn_tf2_wiki;
         private System.Windows.Forms.TextBox txtb_hlmv_fov;
         private System.Windows.Forms.Panel panel13;
@@ -3038,7 +3053,6 @@
         private System.Windows.Forms.Button btn_update_paints;
         private System.Windows.Forms.Panel vtab_paints;
         private System.Windows.Forms.Label label12;
-        private System.Windows.Forms.LinkLabel linkLabel5;
         private System.Windows.Forms.Panel vtab_adv_settings;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Panel panel_adv_settings;
@@ -3102,7 +3116,6 @@
         private System.Windows.Forms.Panel panel9;
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.CheckBox cb_disable_custom_mods;
-        private System.Windows.Forms.Panel panel17;
         private System.Windows.Forms.Panel panel16;
         private System.Windows.Forms.Panel panel15;
         private System.Windows.Forms.Label label30;
@@ -3115,9 +3128,7 @@
         private System.Windows.Forms.Label label33;
         private System.Windows.Forms.Panel panel23;
         private System.Windows.Forms.Label label32;
-        private System.Windows.Forms.Label label22;
         private System.Windows.Forms.Button btn_expand_item_list;
-        private System.Windows.Forms.CheckBox cb_screenshot_transparency;
         private System.Windows.Forms.Panel separator;
         private System.Windows.Forms.Button btn_bg_color1;
         private System.Windows.Forms.Label lab_trsp_scrn1;
@@ -3197,7 +3208,6 @@
         private System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.Label label43;
         private System.Windows.Forms.LinkLabel linkLabel4;
-        private System.Windows.Forms.Label lbl_EasterEgg;
         private System.Windows.Forms.Button btn_reset_window;
         private System.Windows.Forms.Button btn_reset_background;
         private System.Windows.Forms.Button btn_medal;
@@ -3214,7 +3224,6 @@
         private System.Windows.Forms.Label label49;
         private System.Windows.Forms.ComboBox lstStartupTab_Class;
         private System.Windows.Forms.Label label48;
-        private System.Windows.Forms.PictureBox img_EasterEgg;
         private System.Windows.Forms.Panel panel41;
         private System.Windows.Forms.Panel panel42;
         private System.Windows.Forms.ContextMenuStrip menu_TF2Item;
@@ -3229,6 +3238,16 @@
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.CheckBox cb_hlmvplusplus_mode;
         private System.Windows.Forms.Label label46;
+        private System.Windows.Forms.ToolStripMenuItem copyZIPPathToolStripMenuItem;
+        private System.Windows.Forms.CheckBox cb_screenshot_transparency;
+        private System.Windows.Forms.PictureBox img_EasterEgg;
+        private System.Windows.Forms.Label lbl_EasterEgg;
+        private System.Windows.Forms.Label label22;
+        private System.Windows.Forms.Label label24;
+        private System.Windows.Forms.Label label23;
+        private System.Windows.Forms.LinkLabel linkLabel5;
+        private System.Windows.Forms.Panel panel17;
+        private System.Windows.Forms.Label label45;
     }
 }
 
