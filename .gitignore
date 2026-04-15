@@ -1,0 +1,82 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+[Bb]ld/
+
+# Visual Studio cache/temp files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.userprefs
+*.sln.docstates
+*.VC.db
+*.VC.opendb
+*.vcxproj.user
+*.csproj.user
+*.ncrunchsolution
+*.ncrunchproject
+
+# ReSharper / Rider
+_ReSharper*/
+*.DotSettings.user
+
+# NuGet
+packages/
+*.nupkg
+!packages.config
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# MSBuild logs
+*.binlog
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# ClickOnce publish output
+publish/
+*.publishsettings
+*.pubxml
+*.pubxml.user
+*.azurePubxml
+
+# Windows artifacts
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# OS
+.DS_Store
+
+# Local runtime / user data that shouldn't leak into the repo
+# (TFMV writes to its own config/cached dirs under bin/ at runtime — those
+# are already excluded by bin/ above, but just in case someone adds a
+# top-level one later)
+/config/
+/cached/
+/tmp/
+/tmp_loadout/
+/tmp_workshop_zip/
+/cubemaps/
+
+# TFMV-specific: never commit API keys
+**/api_key.ini
+
+# Crash/log dumps
+*.log
+*.pdb.gz
+*.dmp
+
+# Editor backups
+*~
+*.bak
+*.swp
