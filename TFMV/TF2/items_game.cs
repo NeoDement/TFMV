@@ -17,6 +17,7 @@ namespace TFMV.TF2
             public string Name_str { get; set; } // internal name
 
             public string icon_url { get; set; }
+            public string image_inventory { get; set; }
             public string model_path { get; set; }
 
             public string show_in_armory { get; set; }
@@ -24,9 +25,8 @@ namespace TFMV.TF2
             public string item_slot { get; set; }
             public string anim_slot { get; set; }
 
-            // item_slot from schema.vdf = "misc" since in items_game.vdf it can be anything (head, feet, etc) and wee
-            // we get the category (misc, primary,secondary, melee etc) from schema.vdf
-            public string item_slot_schema { get; set; } 
+            // general item slot category (misc, primary, secondary, melee etc) from items_game.txt
+            public string item_slot_schema { get; set; }
             public string equip_rgn { get; set; }
             public bool not_paintable { get; set; }
 
@@ -120,12 +120,14 @@ namespace TFMV.TF2
             public List<player_bodygroup> player_bodygroups { get; set; }
             public List<attached_model> attached_models { get; set; }
             public List<style> styles { get; set; }
+            public byte skin { get; set; }
 
             public visuals()
             {
                  player_bodygroups = new List<player_bodygroup>();
                  attached_models = new List<attached_model>();
                  styles = new List<style>();
+                 skin = 255;
             }
         }
 

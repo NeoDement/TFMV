@@ -140,6 +140,7 @@ namespace TFMV
 
         public string name { get; set; } //bs
         public string file_path { get; set; }
+        public string _lastError { get; set; }
 
 		bool _indent = true;
         public VDF_node RootNode { get; set; }
@@ -167,14 +168,17 @@ namespace TFMV
         /// <summary>
         /// Clears all nodes and loads them from <see cref="file_path"/>
         /// </summary>
-        public void load_VDF_file()
+        public bool load_VDF_file()
         {
             string[] lines;
             try
             {
                 lines = File.ReadAllLines(file_path);
-            } catch {
-                return;
+            }
+            catch (Exception ex)
+            {
+                _lastError = "Failed to read VDF file: " + file_path + "\n" + ex.Message;
+                return false;
             }
 
             RootNode = new VDF_node();
@@ -260,7 +264,7 @@ namespace TFMV
 
             }
             RootNode = currentNode;
-
+            return true;
         }
 
 

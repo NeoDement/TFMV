@@ -18,7 +18,7 @@ namespace TFMV.TF2
             players_mats.Add(new player_material("demoman", @"materials\models\player\demo\", "demoman", 1));
             players_mats.Add(new player_material("engineer", @"materials\models\player\engineer\", "engineer", 2));
 
-            players_mats.Add(new player_material("heavy", @"materials\models\player\hvyweapon\", "hvyweapon", 0));
+            players_mats.Add(new player_material("heavy", @"materials\models\player\hvyweapon\", "hvyweapon", 2));
            // players_mats.Add(new player_material("heavy", @"materials\models\player\hvyweapon\", "hvyweapon_hands"));
 
             players_mats.Add(new player_material("medic", @"materials\models\player\medic\", "medic", 2));

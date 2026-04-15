@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -7,131 +8,86 @@ namespace TFMV.TF2
 {
     public class player_bodygroups
     {
+        // bodygroup lists per class — populated from bodygroups.txt
+        public List<player_bodygroup> scout = new List<player_bodygroup>();
+        public List<player_bodygroup> soldier = new List<player_bodygroup>();
+        public List<player_bodygroup> pyro = new List<player_bodygroup>();
         public List<player_bodygroup> demoman = new List<player_bodygroup>();
-        public List<bodygroup_combination> demoman_combinations = new List<bodygroup_combination>();
-
         public List<player_bodygroup> engineer = new List<player_bodygroup>();
-        public List<bodygroup_combination> engineer_combinations = new List<bodygroup_combination>();
-
-
         public List<player_bodygroup> heavy = new List<player_bodygroup>();
         public List<player_bodygroup> medic = new List<player_bodygroup>();
-
-        public List<bodygroup_combination> medic_combinations = new List<bodygroup_combination>();
-
-        public List<player_bodygroup> pyro = new List<player_bodygroup>();
-        public List<bodygroup_combination> pyro_combinations = new List<bodygroup_combination>();
-
-        public List<player_bodygroup> scout = new List<player_bodygroup>();
-        public List<bodygroup_combination> scout_combinations = new List<bodygroup_combination>();
-
-
         public List<player_bodygroup> sniper = new List<player_bodygroup>();
-
-        public List<player_bodygroup> soldier = new List<player_bodygroup>();
-        public List<bodygroup_combination> soldier_combinations = new List<bodygroup_combination>();
-        // public player_bodygroups spy = new player_bodygroups(); //spy has no bodygroups we'd need to modify
 
         public player_bodygroups()
         {
+            string config_path = Main.app_data_dir + "bodygroups.txt";
 
-            this.scout.Add(new player_bodygroup("scout", 0, ""));
-            this.scout.Add(new player_bodygroup("hat", 1, "scout_hat"));
-            this.scout.Add(new player_bodygroup("headphones", 0, "scout_headphones"));
-            this.scout.Add(new player_bodygroup("shoes_socks", 0, "scout_shoes_socks"));
-            this.scout.Add(new player_bodygroup("dogtags", 0, "scout_dogtags"));
+            if (File.Exists(config_path))
+            {
+                load_from_file(config_path);
+            }
+        }
 
-            this.scout_combinations.Add(new bodygroup_combination(new string[2] { "hat", "dogtags" }, "scout_hat_dogtags"));
-            this.scout_combinations.Add(new bodygroup_combination(new string[3] { "hat", "dogtags", "headphones" }, "scout_hat_dogtags_headphones"));
-            this.scout_combinations.Add(new bodygroup_combination(new string[2] { "hat", "headphones" }, "scout_hat_headphones"));
-            
-            this.scout_combinations.Add(new bodygroup_combination(new string[3] { "hat", "shoes_socks", "dogtags" }, "scout_hat_shoes_socks_dogtags"));
-            this.scout_combinations.Add(new bodygroup_combination(new string[4] { "hat", "shoes_socks", "dogtags", "headphones" }, "scout_hat_shoes_socks_dogtags_headphones"));
-            this.scout_combinations.Add(new bodygroup_combination(new string[3] { "hat", "shoes_socks", "headphones" }, "scout_hat_shoes_socks_headphones"));
+        private void load_from_file(string path)
+        {
+            string[] lines = File.ReadAllLines(path);
 
+            foreach (string raw_line in lines)
+            {
+                string line = raw_line.Trim();
 
-            this.scout_combinations.Add(new bodygroup_combination(new string[2] { "hat", "shoes_socks" }, "scout_hat_shoes_socks"));
-            this.scout_combinations.Add(new bodygroup_combination(new string[2] { "shoes_socks", "dogtags" }, "scout_shoes_socks_dogtags"));
-            this.scout_combinations.Add(new bodygroup_combination(new string[2] { "shoes_socks", "headphones" }, "scout_shoes_socks_headphones"));
-            this.scout_combinations.Add(new bodygroup_combination(new string[2] { "headphones", "dogtags" }, "scout_headphones_dogtags"));
+                // skip comments and blank lines
+                if (line == "" || line.StartsWith("#")) { continue; }
 
-            this.scout_combinations.Add(new bodygroup_combination(new string[3] { "headphones", "shoes_socks", "dogtags" }, "scout_headphones_shoes_socks_dogtags"));
+                string[] parts = line.Split(',');
+                if (parts.Length < 3) { continue; }
 
+                string tf_class = parts[0].Trim().ToLower();
+                string name = parts[1].Trim();
+                string mask_name = parts[2].Trim();
+                string target_mat = (parts.Length > 3 && parts[3].Trim() != "") ? parts[3].Trim() : null;
 
+                player_bodygroup bg = new player_bodygroup(name, mask_name, target_mat);
 
-            this.soldier.Add(new player_bodygroup("soldier", 0, ""));
-            this.soldier.Add(new player_bodygroup("rocket", 1, ""));
-            this.soldier.Add(new player_bodygroup("hat", 0, "soldier_hat"));
-            this.soldier.Add(new player_bodygroup("medal", 0, ""));
-            this.soldier.Add(new player_bodygroup("grenades", 0, "soldier_grenades"));
+                List<player_bodygroup> list = get_list(tf_class);
+                if (list != null) { list.Add(bg); }
+            }
+        }
 
-            this.soldier_combinations.Add(new bodygroup_combination(new string[2] { "hat", "grenades" }, "soldier_grenades_hat"));
-
-
-
-            this.pyro.Add(new player_bodygroup("pyro", 0, ""));
-            this.pyro.Add(new player_bodygroup("head", 0, "pyro_head"));
-            this.pyro.Add(new player_bodygroup("grenades", 0, "pyro_grenades"));
-            this.pyro.Add(new player_bodygroup("backpack", 0, "pyro_backpack"));
-
-            this.pyro_combinations.Add(new bodygroup_combination(new string[2] { "backpack", "grenades" }, "pyro_backpack_grenades"));
-            this.pyro_combinations.Add(new bodygroup_combination(new string[2] { "backpack", "head" }, "pyro_backpack_head"));
-            this.pyro_combinations.Add(new bodygroup_combination(new string[2] { "head", "grenades" }, "pyro_head_grenades"));
-            this.pyro_combinations.Add(new bodygroup_combination(new string[3] { "backpack", "head", "grenades" }, "pyro_head_grenades_backpack"));
-
-
-
-            this.demoman.Add(new player_bodygroup("demo", 0, ""));
-            this.demoman.Add(new player_bodygroup("smile", 0, ""));
-            this.demoman.Add(new player_bodygroup("shoes", 0, "demoman_shoes"));
-            this.demoman.Add(new player_bodygroup("grenades", 0, "demoman_grenades"));
-
-            this.demoman_combinations.Add(new bodygroup_combination(new string[2] { "shoes", "grenades" }, "demoman_shoes_grenades"));
-
-            this.engineer.Add(new player_bodygroup("engineer", 0, ""));
-            this.engineer.Add(new player_bodygroup("hat", 0, "engineer_hat"));
-
-            this.engineer.Add(new player_bodygroup("rightarm", 0, "engineer_rightarm"));
-
-            this.engineer_combinations.Add(new bodygroup_combination(new string[2] { "hat", "rightarm" }, "engineer_rightarm_hat"));
-
-
-            this.heavy.Add(new player_bodygroup("heavy", 0, ""));
-            this.heavy.Add(new player_bodygroup("hands", 0, "hvyweapon_hands"));
-
-            this.medic.Add(new player_bodygroup("medic", 0, ""));
-            this.medic.Add(new player_bodygroup("medic_backpack", 0, "medic_backpack"));
-//todo: finish implementing this
-//            this.medic.Add(new player_bodygroup("head", 0, "medic_head"));
-//???
-//            this.medic_combinations.Add(new bodygroup_combination(new string[2] { "medic_backpack", "head" }, "engineer_rightarm_hat"));
-
-            this.sniper.Add(new player_bodygroup("sniper", 0, ""));
-            this.sniper.Add(new player_bodygroup("arrows", 1, ""));
-            this.sniper.Add(new player_bodygroup("hat", 0, "sniper_hat"));
-            this.sniper.Add(new player_bodygroup("bullets", 0, ""));
-
+        public List<player_bodygroup> get_list(string tf_class)
+        {
+            switch (tf_class)
+            {
+                case "scout": return scout;
+                case "soldier": return soldier;
+                case "pyro": return pyro;
+                case "demoman": return demoman;
+                case "demo": return demoman;
+                case "engineer": return engineer;
+                case "heavy": return heavy;
+                case "medic": return medic;
+                case "sniper": return sniper;
+                default: return null;
+            }
         }
     }
 
     public class player_bodygroup
     {
         public string name { get; set; }
-        public byte submodel_num { get; set; } //0 = visible // 1 = off if there is no more than two submodels
         public string mask_name { get; set; }
+        // optional: override the material this bodygroup targets (null = use class default)
+        public string target_mat { get; set; }
 
-        // public string alpha_mask_name { get; set; }
-        // alpha_mask_name is for the player.vtf alpha, so we can make the part of the model transparent
-
-        public player_bodygroup(string name, byte submodel_num, string mask_name)
+        public player_bodygroup(string name, string mask_name, string target_mat = null)
         {
             this.name = name;
-            this.submodel_num = submodel_num;
             this.mask_name = mask_name;
+            this.target_mat = target_mat;
         }
     }
 
-    // possible combination of masks and the mask file name
+    // kept for backwards compatibility
     public class bodygroup_combination
     {
         public String[] mask_names { get; set; }

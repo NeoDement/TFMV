@@ -18,12 +18,11 @@ namespace TFMV.UserControls
 {
     public partial class Bodygroup_manager : UserControl
     {
-        private TF2.player_bodygroups player_bodygroups = new TF2.player_bodygroups();
+        private TF2.player_bodygroups player_bodygroups;
 
         private List<TF2.player_bodygroup> bodygroups_class = new List<TF2.player_bodygroup>();
-        private List<TF2.bodygroup_combination> bodygroups_combinations = new List<TF2.bodygroup_combination>();
 
-        private string tfmv_dir,cached_dir,player_class,team_color;
+        private string tfmv_dir,player_class,team_color;
 
 
         public Bodygroup_manager()
@@ -32,12 +31,14 @@ namespace TFMV.UserControls
         }
 
 
-        public void setup(List<String> loadout_bodygroups_off, string _tfmv_dir, string _cached_dir, string _player_class, string _team_color)
+        public void setup(List<String> loadout_bodygroups_off, string _tfmv_dir, string _player_class, string _team_color)
         {
             tfmv_dir = _tfmv_dir;
-            cached_dir = _cached_dir;
             player_class = _player_class;
             team_color = _team_color;
+
+            // construct here so app_data_dir has been set (debug override runs before setup is called)
+            player_bodygroups = new TF2.player_bodygroups();
 
             this.Controls.Clear();
             bodygroups_manager_setup(this.player_class, loadout_bodygroups_off);
@@ -102,59 +103,14 @@ namespace TFMV.UserControls
         private void bodygroups_manager_setup(string tf_class, List<String> loadout_bodygroups_off)
         {
 
-            if ((tf_class == "") || (tfmv_dir == "") || (cached_dir == "") || (team_color == "")) { return; }
+            if ((tf_class == "") || (tfmv_dir == "") || (team_color == "")) { return; }
 
             // clear bodygroups panel
             this.Controls.Clear();
 
 
-            // get classes's bodygroups from the lists "player_bodygroups"
-            #region load player class bodygroups
-
-            bodygroups_class = new List<TF2.player_bodygroup>();
-            bodygroups_combinations = new List<TF2.bodygroup_combination>();
-
-            // object bodygroup_class = player_bodygroups.GetType().GetMember("scout");
-            // TODO
-            // we could get the bodygroup from "player_bodygroups" by name through reflection instead of using this switch
-            switch (tf_class)
-            {
-                case "scout":
-                    bodygroups_class = player_bodygroups.scout;
-                    bodygroups_combinations = player_bodygroups.scout_combinations;
-                    break;
-                case "soldier":
-                    bodygroups_class = player_bodygroups.soldier;
-                    bodygroups_combinations = player_bodygroups.soldier_combinations;
-                    break;
-                case "pyro":
-                    bodygroups_class = player_bodygroups.pyro;
-                    bodygroups_combinations = player_bodygroups.pyro_combinations;
-                    break;
-                case "demoman":
-                    bodygroups_class = player_bodygroups.demoman;
-                    bodygroups_combinations = player_bodygroups.demoman_combinations;
-                    break;
-                case "demo":
-                    bodygroups_class = player_bodygroups.demoman;
-                    bodygroups_combinations = player_bodygroups.demoman_combinations;
-                    break;
-                case "medic":
-                    bodygroups_class = player_bodygroups.medic;
-                    break;
-                case "heavy":
-                    bodygroups_class = player_bodygroups.heavy;
-                    break;
-                case "sniper":
-                    bodygroups_class = player_bodygroups.sniper;
-                    break;
-                case "engineer":
-                    bodygroups_class = player_bodygroups.engineer;
-                    bodygroups_combinations = player_bodygroups.engineer_combinations;
-                    break;
-            }
-
-            #endregion
+            // get class's bodygroups from bodygroups.txt via player_bodygroups
+            bodygroups_class = player_bodygroups.get_list(tf_class) ?? new List<TF2.player_bodygroup>();
 
             if (tf_class == "heavy") { tf_class = "hvyweapon"; }
 
@@ -217,6 +173,37 @@ namespace TFMV.UserControls
 
 
 
+        // loads a bodygroup mask PNG from config\bodygroup_masks\ as a Bitmap
+        private Bitmap load_mask(string mask_name, string tf_class, string bodygroup_name)
+        {
+            string name = (mask_name != "") ? mask_name : tf_class + "_" + bodygroup_name;
+            string png_path = Main.app_data_dir + "bodygroup_masks\\" + name + ".png";
+
+            if (!File.Exists(png_path)) { return null; }
+            return new Bitmap(png_path);
+        }
+
+        // combines two mask bitmaps by taking the brighter pixel (additive blend)
+        private Bitmap combine_masks(Bitmap a, Bitmap b)
+        {
+            int w = Math.Max(a.Width, b.Width);
+            int h = Math.Max(a.Height, b.Height);
+            Bitmap result = new Bitmap(w, h);
+
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int va = (x < a.Width && y < a.Height) ? a.GetPixel(x, y).R : 255;
+                    int vb = (x < b.Width && y < b.Height) ? b.GetPixel(x, y).R : 255;
+                    int v = Math.Min(255, va + vb);
+                    result.SetPixel(x, y, Color.FromArgb(255, v, v, v));
+                }
+            }
+
+            return result;
+        }
+
         // generates player's VTF with transparency alpha mask for the bodygroups
         // and the VMT with transparency parameters
         public void gen_player_material(List<string> bodygroups_off)
@@ -226,7 +213,7 @@ namespace TFMV.UserControls
             string tf_class = player_class;
 
             if (tf_class == "demo") { tf_class = "demoman"; }
-          
+
             #region search for player material
 
             TF2.player_material player_material = null;
@@ -249,256 +236,172 @@ namespace TFMV.UserControls
 
             // if player material was no found, exit
             if (player_material == null) { return; }
-            string mat_name = player_material.mat_name + "_" + team_color;
-            string vtf_name = player_material.mat_name + "_" + team_color;
 
-
-            #region player class exception for material name
-
-            if (tf_class == "medic")
-            {
-                mat_name = "medic_backpack_" + team_color;
-                vtf_name = "medic_backpack_" + team_color;
-            }
-
-            if (tf_class == "heavy")
-            {
-                mat_name = "hvyweapon_red_sheen";
-            }
+            // default material name for this class + team
+            string default_mat = player_material.mat_name + "_" + team_color;
+            if (tf_class == "medic") { default_mat = "medic_backpack_" + team_color; }
 
             #endregion
 
-            // extract VMT of player's team color
-            if (!Main.grey_material)
-            { 
-                VPK.Extract(player_material.mat_dir + mat_name + ".vmt", tfmv_dir + player_material.mat_dir, 0);
-            }
-
-            #endregion
-
-            // if there's no bodygroups to hide, return
+            // if there's no bodygroups to hide and not grey material, clean up and return
             if ((bodygroups_off.Count == 0) && (!Main.grey_material))
             {
-                miscFunc.delete_safe(tfmv_dir + player_material.mat_dir + vtf_name + ".vtf");
-                miscFunc.delete_safe(tfmv_dir + player_material.mat_dir + mat_name + ".vmt");
+                miscFunc.delete_safe(tfmv_dir + player_material.mat_dir + default_mat + ".vtf");
+                miscFunc.delete_safe(tfmv_dir + player_material.mat_dir + default_mat + ".vmt");
                 return;
             }
 
+            #region group bodygroups by target material
 
-            VTFedit vtf_edit = new VTFedit();
+            // bodygroups can target different materials (e.g. heavy hands targets sheen, others target body)
+            // group them so we process each material once with a combined mask
+            Dictionary<string, List<string>> mat_to_bodygroups = new Dictionary<string, List<string>>();
 
-            #region single bodygroup mask
-
-            // if only one mask
-            if (bodygroups_off.Count == 1)
+            foreach (string bodygroup_name in bodygroups_off)
             {
-                #region get alpha mask from resources
-
-                System.Reflection.Assembly asm = Assembly.GetExecutingAssembly();
-
-                string mask_name = "";
-                for (int i = 0; i < bodygroups_class.Count; i++)
-			    {
-                    if (bodygroups_class[i].name == bodygroups_off[0])
+                string target = default_mat;
+                foreach (var bg in bodygroups_class)
+                {
+                    if (bg.name == bodygroup_name && bg.target_mat != null)
                     {
-                        mask_name = bodygroups_class[i].mask_name;
-                    }
-			    }
-                System.IO.Stream fs;
-                if (mask_name != "")
-                {
-                    fs = asm.GetManifestResourceStream("TFMV.Resources.bodygroup_masks." + mask_name + ".bin");
-                } else {
-                     fs = asm.GetManifestResourceStream("TFMV.Resources.bodygroup_masks." + tf_class + "_" + bodygroups_off[0] + ".bin");
-                }
-                
-
-                if (fs == null) { return; }
-
-                // convert stream to byte array
-                byte[] result;
-                using (var streamReader = new MemoryStream())
-                {
-                    fs.CopyTo(streamReader);
-                    result = streamReader.ToArray();
-                }
-
-                #endregion
-
-                // decompress alpha mask  // add to list
-                byte[] alpha_mask = vtf_edit.decompress_byte_array(result);
-
-                string cached_vtf = cached_dir + vtf_name + "_mask" + ".vtf";
-                if ((player_material.texture_res == 1) && (Main.grey_material)) { cached_vtf = cached_dir + "rgba_grey_1024_512.vtf"; }
-                if((player_material.texture_res == 2) && (Main.grey_material)) { cached_vtf = cached_dir + "rgba_grey_2048_1024.vtf"; }
-
-
-                // inject alpha
-                // copy paste vtf file to tf/custom/tfmv/materials
-                if (File.Exists(cached_vtf))
-                {
-                    vtf_edit.write_alpha(cached_vtf, alpha_mask);
-                    File.Copy(cached_vtf, tfmv_dir + player_material.mat_dir + vtf_name + ".vtf", true);
-                }
-
-            }
-
-            #endregion
-
-
-            #region multiple bodygroups masks
-            // if more than one mask search for combined mask
-            if (bodygroups_off.Count > 1)
-            {
-                // search some same combination of bodygroups
-                int match_count = 0;
-                string match = "";
-
-                #region search matching mask combination
-
-                List<TF2.bodygroup_combination> masks_combinations = new List<TF2.bodygroup_combination>();
-
-                // pick arrays that have the same number of masks
-                for (int i = 0; i < bodygroups_combinations.Count; i++)
-                {
-                    if (bodygroups_combinations[i].mask_names.Length == bodygroups_off.Count)
-                    {
-                        masks_combinations.Add(bodygroups_combinations[i]);
-                    }
-                }
-
-                foreach (var masks in masks_combinations)
-                {
-                    match_count = 0;
-                    for (int i = 0; i < masks.mask_names.Length; i++)
-                    {
-                        for (int b = 0; b < bodygroups_off.Count; b++)
-                        {
-                            if (masks.mask_names[i] == bodygroups_off[b])
-                            {
-                                match_count++;
-                                if (match_count == bodygroups_off.Count)
-                                {
-                                    match = masks.mask_filename;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if (match != "") { break; }
-                }
-
-                #endregion
-
-                //MessageBox.Show(match);
-
-
-                if (match != "")
-                {
-
-                    #region get alpha mask from resources
-                    System.Reflection.Assembly asm = Assembly.GetExecutingAssembly();
-                    System.IO.Stream fs = asm.GetManifestResourceStream("TFMV.Resources.bodygroup_masks." + match + ".bin");
-
-                    if (fs == null) { return; }
-
-                    // convert stream to byte array
-                    byte[] result;
-                    using (var streamReader = new MemoryStream())
-                    {
-                        fs.CopyTo(streamReader);
-                        result = streamReader.ToArray();
-                    }
-
-                    #endregion
-                    // decompress alpha mask // add to list
-                    byte[] alpha_mask = vtf_edit.decompress_byte_array(result);
-
-                    string cached_vtf = cached_dir + vtf_name + "_mask" + ".vtf";
-                    if ((player_material.texture_res == 1) && (Main.grey_material)) { cached_vtf = cached_dir + "rgba_grey_1024_512.vtf"; }
-                    if ((player_material.texture_res == 2) && (Main.grey_material)) { cached_vtf = cached_dir + "rgba_grey_2048_1024.vtf"; }
-
-                    // inject alpha
-                    // copy paste vtf file to tf/custom/tfmv/materials
-                    if (File.Exists(cached_vtf))
-                    {
-                        vtf_edit.write_alpha(cached_vtf, alpha_mask);
-
-                        File.Copy(cached_vtf, tfmv_dir + player_material.mat_dir + vtf_name + ".vtf", true);
-                    }
-
-                }
-
-            } // end if
-
-            #endregion
-
-
-
-            #region edit VMT to add transparency
-
-            List<string> vmt_lines = new List<string>();
-
-            if (tf_class == "heavy")
-            {
-                mat_name = "hvyweapon_red_sheen";
-            }
-
-            try
-            {
-                // if there's no bodygroups to hide but we're using the grey material
-                if ((bodygroups_off.Count == 0) && (Main.grey_material))
-                {
-                    VMT.set_parameter(tfmv_dir + player_material.mat_dir + mat_name + ".vmt", "basetexture", "tfmv\\flat_color.vtf");
-                    return;
-                }
-                else if ((bodygroups_off.Count > 0) && (Main.grey_material))
-                {
-                    VMT.set_parameter(tfmv_dir + player_material.mat_dir + mat_name + ".vmt", "basetexture", player_material.mat_dir.ToLower().Replace("materials\\models\\", "models\\") + mat_name + ".vtf");
-                    return;
-                }
-
-                string rline;
-                System.IO.StreamReader file = new System.IO.StreamReader(tfmv_dir + player_material.mat_dir + mat_name + ".vmt");
-                while ((rline = file.ReadLine()) != null)
-                {
-                    vmt_lines.Add(rline);
-                }
-
-                file.Close();
-
-                // remove all tabs, white spaces etc
-                RegexOptions options = RegexOptions.None;
-                Regex regex = new Regex(@"\s*?$", options);
-
-                for (int i = 0; i < vmt_lines.Count; i++)
-                {
-                    string line = ((regex.Replace(vmt_lines[i], @" ")).Trim()).ToLower().Replace("  ", " ");
-
-                    // make sure its not a line that's commented out
-                    if (line.Contains("{"))
-                    {
-                       
-                        if (tf_class == "medic")
-                        {
-                            vmt_lines.Insert(i + 1, "\t$translucent 1\n\t$alphatest 1\n" + "\t$basemapalphaphongmask 0");
-                        } else {
-                            vmt_lines.Insert(i + 1, "\t$translucent 1\n\t$alphatest 1\n");
-                        }
+                        target = bg.target_mat;
                         break;
                     }
                 }
 
-                // make VMT red, since we can't switch the model skin in HLMV
-                if (team_color == "blue") { mat_name = mat_name.Replace("blue", "red"); }
-             
-                File.WriteAllLines(tfmv_dir + player_material.mat_dir + mat_name + ".vmt", vmt_lines);
+                if (!mat_to_bodygroups.ContainsKey(target))
+                {
+                    mat_to_bodygroups[target] = new List<string>();
+                }
+                mat_to_bodygroups[target].Add(bodygroup_name);
             }
-            catch
+
+            // if grey material with no bodygroups off, still need to process the default material
+            if (mat_to_bodygroups.Count == 0 && Main.grey_material)
             {
+                mat_to_bodygroups[default_mat] = new List<string>();
             }
 
             #endregion
+
+            VTFedit vtf_edit = new VTFedit();
+
+            foreach (var kvp in mat_to_bodygroups)
+            {
+                string mat_name = kvp.Key;
+                List<string> bodygroups_for_mat = kvp.Value;
+
+                #region build combined alpha mask from individual masks
+
+                Bitmap combined_mask = null;
+
+                foreach (string bodygroup_name in bodygroups_for_mat)
+                {
+                    string mask_name = "";
+                    foreach (var bg in bodygroups_class)
+                    {
+                        if (bg.name == bodygroup_name) { mask_name = bg.mask_name; break; }
+                    }
+
+                    Bitmap mask = load_mask(mask_name, tf_class, bodygroup_name);
+                    if (mask == null) { continue; }
+
+                    if (combined_mask == null)
+                    {
+                        combined_mask = mask;
+                    }
+                    else
+                    {
+                        Bitmap old = combined_mask;
+                        combined_mask = combine_masks(combined_mask, mask);
+                        old.Dispose();
+                        mask.Dispose();
+                    }
+                }
+
+                if (combined_mask == null && !Main.grey_material) { continue; }
+
+                #endregion
+
+                #region extract VTF from VPK and inject alpha mask
+
+                byte[] vtf_bytes = vtf_edit.extract_and_prepare_vtf(player_material.mat_dir, mat_name, Main.tmp_dir);
+
+                if (vtf_bytes != null && combined_mask != null)
+                {
+                    string out_dir = tfmv_dir + player_material.mat_dir;
+                    if (!Directory.Exists(out_dir)) { Directory.CreateDirectory(out_dir); }
+                    vtf_edit.write_alpha_v2(vtf_bytes, combined_mask, out_dir + mat_name + ".vtf");
+                    combined_mask.Dispose();
+                }
+
+                #endregion
+
+                #region extract and edit VMT to add transparency
+
+                // extract VMT from VPK
+                if (!Main.grey_material)
+                {
+                    VPK.Extract(player_material.mat_dir + mat_name + ".vmt", tfmv_dir + player_material.mat_dir, 0);
+                }
+
+                try
+                {
+                    string vmt_path = tfmv_dir + player_material.mat_dir + mat_name + ".vmt";
+
+                    if ((bodygroups_for_mat.Count == 0) && (Main.grey_material))
+                    {
+                        VMT.set_parameter(vmt_path, "basetexture", "tfmv\\flat_color.vtf");
+                        continue;
+                    }
+                    else if ((bodygroups_for_mat.Count > 0) && (Main.grey_material))
+                    {
+                        VMT.set_parameter(vmt_path, "basetexture", player_material.mat_dir.ToLower().Replace("materials\\models\\", "models\\") + mat_name + ".vtf");
+                        continue;
+                    }
+
+                    List<string> vmt_lines = new List<string>();
+                    string rline;
+                    System.IO.StreamReader file = new System.IO.StreamReader(vmt_path);
+                    while ((rline = file.ReadLine()) != null)
+                    {
+                        vmt_lines.Add(rline);
+                    }
+                    file.Close();
+
+                    RegexOptions options = RegexOptions.None;
+                    Regex regex = new Regex(@"\s*?$", options);
+
+                    for (int i = 0; i < vmt_lines.Count; i++)
+                    {
+                        string line = ((regex.Replace(vmt_lines[i], @" ")).Trim()).ToLower().Replace("  ", " ");
+
+                        if (line.Contains("{"))
+                        {
+                            if (tf_class == "medic")
+                            {
+                                vmt_lines.Insert(i + 1, "\t$translucent 1\n\t$alphatest 1\n" + "\t$basemapalphaphongmask 0");
+                            }
+                            else
+                            {
+                                vmt_lines.Insert(i + 1, "\t$translucent 1\n\t$alphatest 1\n");
+                            }
+                            break;
+                        }
+                    }
+
+                    // make VMT red, since we can't switch the model skin in HLMV
+                    string vmt_out = mat_name;
+                    if (team_color == "blue") { vmt_out = vmt_out.Replace("blue", "red"); }
+
+                    File.WriteAllLines(tfmv_dir + player_material.mat_dir + vmt_out + ".vmt", vmt_lines);
+                }
+                catch
+                {
+                }
+
+                #endregion
+            }
         }
 
         #endregion

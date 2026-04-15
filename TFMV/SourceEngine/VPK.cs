@@ -20,9 +20,9 @@ namespace TFMV.SourceEngine
         [MarshalAs(UnmanagedType.LPTStr)] string path,
         [MarshalAs(UnmanagedType.LPTStr)] StringBuilder shortPath, int shortPathLength);
 
-        private static string tools_dir = Application.StartupPath + "\\tools\\";
-        private static string app_data_dir = Main.app_data_dir;
-        private static string tmp_dir = app_data_dir + "\\tmp\\";
+        private static string tools_dir { get { return Main.tools_dir; } }
+        private static string app_data_dir { get { return Main.app_data_dir; } }
+        private static string tmp_dir { get { return Main.tmp_dir; } }
 
 
         //gets tf/steam cpaths from the main form

@@ -28,7 +28,7 @@ namespace TFMV.SourceEngine
         public string tf2_dir { get; set; }
         public string bin_dir { get; set; }
 
-        public string settings_dir = Main.app_data_dir;
+        public string settings_dir { get { return Main.settings_dir; } }
 
         public bool valid_config;
 
@@ -36,10 +36,6 @@ namespace TFMV.SourceEngine
         public SteamGameConfig()
         {
             InitializeComponent();
-            #if DEBUG
-//neodement: commented out this hard coded path so it looks wherever it's running from instead.
-                settings_dir = "C:\\Users\\" + Main.DirUserName + "\\Desktop\\TFMV\\config\\";
-#endif
         }
 
         // get Steam install directory from the windows registry
@@ -98,7 +94,11 @@ namespace TFMV.SourceEngine
                             return true;
                         } else {
                             valid_config = false;
-                            MessageBox.Show("Error  (1) Steam and TF2 directories where found, but the SDK tools were not, make sure TF2 tools are properly insalled in 'Team Fortress 2\bin\'.");
+                            MessageBox.Show(
+                                "Steam and TF2 were found, but hlmv.exe is missing.\n\n" +
+                                "The Source SDK tools ship with TF2 in 'Team Fortress 2\\bin\\'.\n" +
+                                "Try verifying TF2's game files through Steam to restore the missing tools.",
+                                "TF2 SDK Tools Missing");
                             // could not find HLMV
                             return false;
                         }
@@ -114,7 +114,10 @@ namespace TFMV.SourceEngine
                 else
                 {
                     valid_config = false;
-                    MessageBox.Show("Error (2) could not find the Steam install directory. \nPlease set it manually.");
+                    MessageBox.Show(
+                        "Could not find your Steam install directory.\n\n" +
+                        "Please click 'Select Directory' next to Steam Directory and point it at your Steam folder manually (e.g. C:\\Program Files (x86)\\Steam\\).",
+                        "Steam Not Found");
                     return false;
                 }
                 #endregion
@@ -122,7 +125,10 @@ namespace TFMV.SourceEngine
             }
             catch
             {
-                MessageBox.Show("Error  (3) failed to read Steam install directory from the registry. \nPlease set it manually.");
+                MessageBox.Show(
+                    "Failed to read the Steam install directory from the Windows registry.\n\n" +
+                    "Please click 'Select Directory' next to Steam Directory and point it at your Steam folder manually.",
+                    "Steam Registry Read Failed");
                 valid_config = false;
                 return false;
             }
@@ -135,113 +141,164 @@ namespace TFMV.SourceEngine
         {
             var steam_config = steam_dir + "config\\config.vdf";
 
-            //if config.vdf exists
-            if(!File.Exists(steam_config))
+            // if config.vdf exists, try to get the exact install path from it first
+            if (File.Exists(steam_config))
             {
-                MessageBox.Show("Error (0) Could not find   " + steam_config);
-                return false;
-            }
-
-
-            #region get VDF steam_config data
-
-            TFMV.VDF_parser pr_config = new TFMV.VDF_parser();
-            pr_config.file_path = steam_config;
-            pr_config.load_VDF_file();
-
-            // get installdir
-            TFMV.VDF_parser.VDF_node node_App = pr_config.sGet_NodePath("InstallConfigStore.Software.Valve.Steam.apps." + appid.ToString());
-            string installdir_test = pr_config.sGet_KeyVal(node_App, "installdir");
-            installdir_test = Regex.Replace(installdir_test, @"\\\\", @"\");
-
-            // get BaseInstallFolder_1
-            TFMV.VDF_parser.VDF_node node_steam = pr_config.sGet_NodePath("InstallConfigStore.Software.Valve.Steam");
-            string BaseInstallFolder_1 = pr_config.sGet_KeyVal(node_steam, "BaseInstallFolder_1").Replace(@"\\", @"\");
-
-            #endregion
-
-            // test steam_config.vdf installdir exists
-            if (Directory.Exists(installdir_test))
-            {
-
-                if (sett_tf_dir(installdir_test + "\\tf\\"))
+                try
                 {
-                    return true;
+                    TFMV.VDF_parser pr_config = new TFMV.VDF_parser();
+                    pr_config.file_path = steam_config;
+                    pr_config.load_VDF_file();
+
+                    TFMV.VDF_parser.VDF_node node_App = pr_config.sGet_NodePath("InstallConfigStore.Software.Valve.Steam.apps." + appid.ToString());
+                    string installdir_test = pr_config.sGet_KeyVal(node_App, "installdir");
+                    if (!string.IsNullOrEmpty(installdir_test))
+                    {
+                        installdir_test = Regex.Replace(installdir_test, @"\\\\", @"\");
+                        if (Directory.Exists(installdir_test) && sett_tf_dir(installdir_test + "\\tf\\"))
+                        {
+                            return true;
+                        }
+                    }
                 }
+                catch { /* fall through to library scan */ }
             }
 
+            // scan every Steam library folder listed in libraryfolders.vdf
+            var libraries = get_steam_library_folders();
 
-            string BaseInstallFolder_1_test = (BaseInstallFolder_1 + "\\steamapps\\common\\Team Fortress 2\\").Replace(@"\\", @"\");
-
-            //tf2 path not found in the VDF, we try to check if its in the steam directory
-            if (Directory.Exists(BaseInstallFolder_1_test) == true)
+            foreach (string lib in libraries)
             {
-                if (sett_tf_dir(BaseInstallFolder_1_test + "tf\\"))
+                string candidate = Path.Combine(lib, "steamapps", "common", "Team Fortress 2", "tf") + "\\";
+                candidate = candidate.Replace("/", "\\").Replace("\\\\", "\\");
+                if (Directory.Exists(candidate))
                 {
-                    return true;
-                }
-            }
-        
-
-            #region get libraryfolders.vdf data
-
-            string libraryfolders_path = (steam_dir + "\\SteamApps\\libraryfolders.vdf").Replace(@"\\", @"\");
-            string library_folder = "";
-
-            if (File.Exists(libraryfolders_path))
-            {
-                TFMV.VDF_parser libraryfolders = new TFMV.VDF_parser();
-                pr_config.file_path = libraryfolders_path;
-                pr_config.load_VDF_file();
-
-                TFMV.VDF_parser.VDF_node node = pr_config.sGet_NodePath("LibraryFolders");
-                library_folder = pr_config.sGet_KeyVal(node, "1").Replace(@"\\", @"\");
-            }
-
-            #endregion
-
-
-            // test LibraryFolders 1  ///////////////  TODO TODO TODO >>> we only load the first folder, check if there's multiple and test each
-            if (Directory.Exists(library_folder))
-            {
-                if (sett_tf_dir(library_folder + @"\SteamApps\common\Team Fortress 2\tf\"))
-                {
-                    return true;
-                }
-            }
-
-            // test steam_dir + \SteamApps\common\Team Fortress 2\tf\
-            if (Directory.Exists(steam_dir  + @"\SteamApps\common\Team Fortress 2\tf\"))
-            {
-                if (sett_tf_dir(steam_dir + @"\SteamApps\common\Team Fortress 2\tf\"))
-                {
-                    return true;
+                    if (sett_tf_dir(candidate))
+                    {
+                        return true;
+                    }
                 }
             }
 
             valid_config = false;
 
-            MessageBox.Show("Error (5) Could not find the TF2 install directory, please set the TF directory path manually.");
+            MessageBox.Show(
+                "Could not find your TF2 install in any Steam library folder.\n\n" +
+                "Scanned libraries:\n  - " + string.Join("\n  - ", libraries.ToArray()) +
+                "\n\nPlease click 'Select Directory' next to TF Directory and point it at your TF2 \"tf\" folder manually.",
+                "TF2 Install Not Found");
             return false;
-            
         }
 
-        // checks if hlmv.exe exists
-        private bool validate_tf_dir(bool show_error)
+        // returns every Steam library folder root (not including \steamapps\common)
+        private List<string> get_steam_library_folders()
         {
-            if (File.Exists(tf2_dir + "bin\\hlmv.exe"))
+            var result = new List<string>();
+
+            // the default Steam install is always a library
+            if (!string.IsNullOrEmpty(steam_dir) && Directory.Exists(steam_dir))
             {
-                return true;
-            }
-            else
-            {
-                if (show_error)
-                {
-                    MessageBox.Show("Error: could not find " + tf2_dir + "bin\\hlmv.exe");
-                }
-                return false;
+                result.Add(steam_dir.TrimEnd('\\', '/'));
             }
 
+            // newer Steam stores libraries in steamapps\libraryfolders.vdf
+            // older Steam used config\libraryfolders.vdf — try both
+            string[] candidates = new[]
+            {
+                (steam_dir + "steamapps\\libraryfolders.vdf").Replace("/", "\\").Replace("\\\\", "\\"),
+                (steam_dir + "config\\libraryfolders.vdf").Replace("/", "\\").Replace("\\\\", "\\")
+            };
+
+            foreach (string path in candidates)
+            {
+                if (!File.Exists(path)) continue;
+
+                try
+                {
+                    TFMV.VDF_parser parser = new TFMV.VDF_parser();
+                    parser.file_path = path;
+                    parser.load_VDF_file();
+
+                    TFMV.VDF_parser.VDF_node root = parser.sGet_NodePath("LibraryFolders");
+                    if (root == null || root.nSubNodes == null) root = parser.sGet_NodePath("libraryfolders");
+                    if (root == null || root.nSubNodes == null) continue;
+
+                    // each subnode is a numerically-indexed library folder
+                    foreach (var sub in root.nSubNodes)
+                    {
+                        // newer format: node key is "0", "1", ... each with a "path" subnode
+                        // older format: node key is "1", "2", ... with a direct string value
+                        string libPath = null;
+
+                        if (sub.nSubNodes != null && sub.nSubNodes.Count > 0)
+                        {
+                            libPath = parser.sGet_KeyVal(sub, "path");
+                        }
+
+                        if (string.IsNullOrEmpty(libPath))
+                        {
+                            libPath = sub.nvalue;
+                        }
+
+                        if (string.IsNullOrEmpty(libPath)) continue;
+
+                        libPath = libPath.Replace(@"\\", @"\").TrimEnd('\\', '/');
+
+                        if (!string.IsNullOrEmpty(libPath) && Directory.Exists(libPath) && !result.Contains(libPath))
+                        {
+                            result.Add(libPath);
+                        }
+                    }
+
+                    break; // found a libraryfolders.vdf that parsed successfully
+                }
+                catch { /* try next candidate */ }
+            }
+
+            return result;
+        }
+
+        // checks that the TF2 install looks intact — returns the list of missing files, or empty list if OK
+        public List<string> validate_tf_install()
+        {
+            var missing = new List<string>();
+
+            if (string.IsNullOrEmpty(tf_dir) || string.IsNullOrEmpty(tf2_dir))
+            {
+                missing.Add("(no TF directory set)");
+                return missing;
+            }
+
+            string[] required = new[]
+            {
+                tf2_dir + "bin\\hlmv.exe",
+                tf_dir + "scripts\\items\\items_game.txt",
+                tf_dir + "tf2_textures_dir.vpk"
+            };
+
+            foreach (string path in required)
+            {
+                if (!File.Exists(path)) missing.Add(path);
+            }
+
+            return missing;
+        }
+
+        // checks that all required TF2 files exist — used internally by the load/detect flow
+        private bool validate_tf_dir(bool show_error)
+        {
+            var missing = validate_tf_install();
+            if (missing.Count == 0) return true;
+
+            if (show_error)
+            {
+                MessageBox.Show(
+                    "The TF2 install at this path is missing required files:\n\n" +
+                    "  - " + string.Join("\n  - ", missing.ToArray()) +
+                    "\n\nTry verifying TF2's game files through Steam, or pick a different folder.",
+                    "TF2 Install Invalid");
+            }
+            return false;
         }
 
 
@@ -269,7 +326,7 @@ namespace TFMV.SourceEngine
                 else
                 {
                     valid_config = false;
-                    MessageBox.Show("Invalid path, please select the \"steam\" folder. \n Example: C:\\Program Files (x86)\\Steam\\");
+                    MessageBox.Show("Please select the \"steam\" folder.\n\nExample: C:\\Program Files (x86)\\Steam\\", "Invalid Folder");
                 }
             }
         }
@@ -296,7 +353,7 @@ namespace TFMV.SourceEngine
                 else
                 {
                     valid_config = false;
-                    MessageBox.Show("Error: please select the \"tf\" folder.\nExample: C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Team Fortress 2\\tf\\");
+                    MessageBox.Show("Please select the \"tf\" folder.\n\nExample: C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Team Fortress 2\\tf\\", "Invalid Folder");
                 }
             }
         }
@@ -400,8 +457,6 @@ namespace TFMV.SourceEngine
                 valid_config = true;
 
             }
-
-
 
         }
 

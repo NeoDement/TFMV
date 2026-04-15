@@ -124,12 +124,16 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Forms\UpdateDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Functions\BitmapProcessing.cs" />
     <Compile Include="Functions\misc.cs" />
     <Compile Include="Functions\Serializer.cs" />
     <Compile Include="Functions\OS_settings.cs" />
     <Compile Include="Functions\StringExtensions.cs" />
     <Compile Include="Functions\tga.cs" />
+    <Compile Include="Functions\Updater.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -149,6 +153,7 @@
     </Compile>
     <Compile Include="SourceEngine\VMT.cs" />
     <Compile Include="SourceEngine\VPK.cs" />
+    <Compile Include="SourceEngine\VPKReader.cs" />
     <Compile Include="SourceEngine\VTFedit.cs" />
     <Compile Include="TF2\model_attachement.cs" />
     <Compile Include="TF2\paints.cs" />
@@ -406,46 +411,12 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="Resources\bodygroup_masks\demoman_shoes.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\demoman_shoes_grenades.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\demoman_grenades.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\engineer_rightarm.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\engineer_rightarm_hat.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\engineer_hat.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\hvyweapon_hands.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\medic_backpack.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\pyro_backpack.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\pyro_backpack_grenades.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\pyro_backpack_head.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\pyro_grenades.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\pyro_head.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\pyro_head_grenades.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\pyro_head_grenades_backpack.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_dogtags.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_hat.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_hat_dogtags.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_hat_dogtags_headphones.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_hat_headphones.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_hat_shoes_socks.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_hat_shoes_socks_dogtags.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_hat_shoes_socks_dogtags_headphones.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_hat_shoes_socks_headphones.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_headphones.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_shoes_socks.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\sniper_hat.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\soldier_grenades.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\soldier_grenades_hat.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\soldier_hat.bin" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\refresh_16xLG.png" />
     <EmbeddedResource Include="Resources\folder_Open_16xLG.png" />
     <EmbeddedResource Include="Resources\Remove_16xLG.png" />
     <EmbeddedResource Include="Resources\action_add_16xLG.png" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_headphones_dogtags.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_shoes_socks_dogtags.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_shoes_socks_headphones.bin" />
-    <EmbeddedResource Include="Resources\bodygroup_masks\scout_headphones_shoes_socks_dogtags.bin" />
     <None Include="Resources\icon_mdl_item.png" />
     <None Include="Resources\icon_workshop_item.png" />
     <None Include="Resources\gear_32xMD.png" />
@@ -508,11 +479,11 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <Target Name="CopyUpdaterToTools" AfterTargets="Build">
+    <PropertyGroup>
+      <UpdaterSrc>$(SolutionDir)TFMV_Updater\bin\$(Configuration)\TFMV_Updater.exe</UpdaterSrc>
+      <UpdaterDst>$(OutDir)tools\TFMV_Updater.exe</UpdaterDst>
+    </PropertyGroup>
+    <Copy Condition="Exists('$(UpdaterSrc)')" SourceFiles="$(UpdaterSrc)" DestinationFiles="$(UpdaterDst)" SkipUnchangedFiles="true" />
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

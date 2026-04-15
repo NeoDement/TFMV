@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -rn \"app_data_dir.*=\" /c/Users/6YFAF/Documents/GitHub/TFMV-main/TFMV/*.cs)",
+      "Bash(find:*)",
+      "Bash(grep -n '^\\\\t\"items\"$' \"/c/Program Files \\(x86\\)/Steam/steamapps/common/Team Fortress 2/tf/scripts/items/items_game.txt\")"
+    ]
+  }
+}

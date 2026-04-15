@@ -847,7 +847,7 @@
     <value>1</value>
   </data>
   <data name="btn_dl_schema.Text" xml:space="preserve">
-    <value>Download Schema</value>
+    <value>Reload Schema</value>
   </data>
   <data name="&gt;&gt;btn_dl_schema.Name" xml:space="preserve">
     <value>btn_dl_schema</value>
@@ -1027,7 +1027,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_disable_fov_mod.Location" type="System.Drawing.Point, System.Drawing">
-    <value>686, 183</value>
+    <value>749, 527</value>
   </data>
   <data name="cb_disable_fov_mod.Size" type="System.Drawing.Size, System.Drawing">
     <value>105, 17</value>
@@ -1152,6 +1152,87 @@
   <data name="&gt;&gt;cb_autoexpandonstartup.ZOrder" xml:space="preserve">
     <value>26</value>
   </data>
+  <data name="cb_check_updates_on_startup.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="cb_check_updates_on_startup.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="cb_check_updates_on_startup.Location" type="System.Drawing.Point, System.Drawing">
+    <value>630, 593</value>
+  </data>
+  <data name="cb_check_updates_on_startup.Size" type="System.Drawing.Size, System.Drawing">
+    <value>163, 17</value>
+  </data>
+  <data name="cb_check_updates_on_startup.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="cb_check_updates_on_startup.Text" xml:space="preserve">
+    <value>Check for updates on startup</value>
+  </data>
+  <data name="&gt;&gt;cb_check_updates_on_startup.Name" xml:space="preserve">
+    <value>cb_check_updates_on_startup</value>
+  </data>
+  <data name="&gt;&gt;cb_check_updates_on_startup.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cb_check_updates_on_startup.Parent" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="&gt;&gt;cb_check_updates_on_startup.ZOrder" xml:space="preserve">
+    <value>27</value>
+  </data>
+  <data name="btn_check_updates.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="btn_check_updates.Location" type="System.Drawing.Point, System.Drawing">
+    <value>558, 461</value>
+  </data>
+  <data name="btn_check_updates.Size" type="System.Drawing.Size, System.Drawing">
+    <value>140, 24</value>
+  </data>
+  <data name="btn_check_updates.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="btn_check_updates.Text" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="&gt;&gt;btn_check_updates.Name" xml:space="preserve">
+    <value>btn_check_updates</value>
+  </data>
+  <data name="&gt;&gt;btn_check_updates.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btn_check_updates.Parent" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="&gt;&gt;btn_check_updates.ZOrder" xml:space="preserve">
+    <value>28</value>
+  </data>
+  <data name="btn_test_update.Location" type="System.Drawing.Point, System.Drawing">
+    <value>525, 527</value>
+  </data>
+  <data name="btn_test_update.Size" type="System.Drawing.Size, System.Drawing">
+    <value>130, 24</value>
+  </data>
+  <data name="btn_test_update.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="btn_test_update.Text" xml:space="preserve">
+    <value>Test update (force)</value>
+  </data>
+  <data name="&gt;&gt;btn_test_update.Name" xml:space="preserve">
+    <value>btn_test_update</value>
+  </data>
+  <data name="&gt;&gt;btn_test_update.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;btn_test_update.Parent" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="&gt;&gt;btn_test_update.ZOrder" xml:space="preserve">
+    <value>29</value>
+  </data>
   <data name="cb_AllowMultipleProc.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -1183,7 +1264,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_AllowMultipleProc.ZOrder" xml:space="preserve">
-    <value>27</value>
+    <value>30</value>
   </data>
   <data name="label14.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1237,7 +1318,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel8.ZOrder" xml:space="preserve">
-    <value>28</value>
+    <value>31</value>
   </data>
   <data name="label1.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1291,7 +1372,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel1.ZOrder" xml:space="preserve">
-    <value>29</value>
+    <value>32</value>
   </data>
   <data name="btn_recache_schema.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -1324,7 +1405,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;btn_recache_schema.ZOrder" xml:space="preserve">
-    <value>30</value>
+    <value>33</value>
   </data>
   <data name="steamGameConfig.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 4</value>
@@ -1345,7 +1426,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;steamGameConfig.ZOrder" xml:space="preserve">
-    <value>31</value>
+    <value>34</value>
   </data>
   <data name="Settings.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 25</value>
@@ -7960,8 +8041,14 @@ removed "Done" message when a paint chart fails TODO</value>
   <data name="richTextBox1.Text" xml:space="preserve">
     <value>_______________________________________________________________________________________________________________________
 
-   0.72 (10/04/2026)
+   2026.1 (10/04/2026)
 _______________________________________________________________________________________________________________________
+
+-Item data is now read directly from your local TF2 installation, replacing the old schema download system.
+
+-Improved bodygroup override system.
+
+-Added Heavy's bullet belt to bodygroup override system.
 
 -Fixed edge-case allowing Window size to accept decimal numbers.
 
@@ -7969,9 +8056,10 @@ ________________________________________________________________________________
 
 -Fixed additional "Loadout to HLMV" button visible when Items panel is expanded (thanks That Hat Guy!)
 
+-Introduced a new version numbering system to make it easier to tell at a glance when TFMV is out of date.
+
 
 _______________________________________________________________________________________________________________________
-
 
    0.71 (12/07/2025)
 _______________________________________________________________________________________________________________________
@@ -9343,9 +9431,6 @@ ________________________________________________________________________________
         AAAAAAAAAAAAAAAAAAAAAAAAAPAPAADgBwAAwmMAAI5xAACccAAAHDAAADwAAAAgAAAAIAQAACAcAAAQ
         GAAAkDgAAIARAADAAwAA4AcAAPgfAAA=
 </value>
-  </data>
-  <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>TFMV</value>

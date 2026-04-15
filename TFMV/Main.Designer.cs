@@ -67,12 +67,16 @@
             this.cb_adv_settings_start_open = new System.Windows.Forms.CheckBox();
             this.cb_disable_custom_mods = new System.Windows.Forms.CheckBox();
             this.cb_autoexpandonstartup = new System.Windows.Forms.CheckBox();
+            this.cb_check_updates_on_startup = new System.Windows.Forms.CheckBox();
+            this.btn_check_updates = new System.Windows.Forms.Button();
+            this.btn_test_update = new System.Windows.Forms.Button();
             this.cb_AllowMultipleProc = new System.Windows.Forms.CheckBox();
             this.panel8 = new System.Windows.Forms.Panel();
             this.label14 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
             this.btn_recache_schema = new System.Windows.Forms.Button();
+            this.steamGameConfig = new TFMV.SourceEngine.SteamGameConfig();
             this.btn_reset_light = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.btn_lColor = new System.Windows.Forms.Button();
@@ -153,6 +157,7 @@
             this.panel40 = new System.Windows.Forms.Panel();
             this.panel39 = new System.Windows.Forms.Panel();
             this.btn_bg_color1 = new System.Windows.Forms.Button();
+            this.colorPicker_master = new TFMV.PaintColorPicker();
             this.btn_screenshot = new System.Windows.Forms.Button();
             this.panel_Bgcolor1 = new System.Windows.Forms.Panel();
             this.btn_mainModel_material = new System.Windows.Forms.Button();
@@ -168,6 +173,7 @@
             this.label7 = new System.Windows.Forms.Label();
             this.panel19 = new System.Windows.Forms.Panel();
             this.txtb_hlmv_wsize_x = new System.Windows.Forms.TextBox();
+            this.bodygroup_manager_panel = new TFMV.UserControls.Bodygroup_manager();
             this.txtb_hlmv_wsize_y = new System.Windows.Forms.TextBox();
             this.btn_window_scale = new System.Windows.Forms.Button();
             this.panel5 = new System.Windows.Forms.Panel();
@@ -316,9 +322,6 @@
             this.copyZIPPathToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.viewOnTF2WikiToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.colorPicker_master = new TFMV.PaintColorPicker();
-            this.steamGameConfig = new TFMV.SourceEngine.SteamGameConfig();
-            this.bodygroup_manager_panel = new TFMV.UserControls.Bodygroup_manager();
             this.Settings.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numUpDown_screenshot_delay)).BeginInit();
             this.panel20.SuspendLayout();
@@ -427,6 +430,9 @@
             this.Settings.Controls.Add(this.cb_adv_settings_start_open);
             this.Settings.Controls.Add(this.cb_disable_custom_mods);
             this.Settings.Controls.Add(this.cb_autoexpandonstartup);
+            this.Settings.Controls.Add(this.cb_check_updates_on_startup);
+            this.Settings.Controls.Add(this.btn_check_updates);
+            this.Settings.Controls.Add(this.btn_test_update);
             this.Settings.Controls.Add(this.cb_AllowMultipleProc);
             this.Settings.Controls.Add(this.panel8);
             this.Settings.Controls.Add(this.panel1);
@@ -678,6 +684,27 @@
             this.cb_autoexpandonstartup.UseVisualStyleBackColor = true;
             this.cb_autoexpandonstartup.CheckedChanged += new System.EventHandler(this.settings_save);
             // 
+            // cb_check_updates_on_startup
+            // 
+            resources.ApplyResources(this.cb_check_updates_on_startup, "cb_check_updates_on_startup");
+            this.cb_check_updates_on_startup.Name = "cb_check_updates_on_startup";
+            this.cb_check_updates_on_startup.UseVisualStyleBackColor = true;
+            this.cb_check_updates_on_startup.CheckedChanged += new System.EventHandler(this.settings_save);
+            // 
+            // btn_check_updates
+            // 
+            resources.ApplyResources(this.btn_check_updates, "btn_check_updates");
+            this.btn_check_updates.Name = "btn_check_updates";
+            this.btn_check_updates.UseVisualStyleBackColor = true;
+            this.btn_check_updates.Click += new System.EventHandler(this.btn_check_updates_Click);
+            // 
+            // btn_test_update
+            // 
+            resources.ApplyResources(this.btn_test_update, "btn_test_update");
+            this.btn_test_update.Name = "btn_test_update";
+            this.btn_test_update.UseVisualStyleBackColor = true;
+            this.btn_test_update.Click += new System.EventHandler(this.btn_test_update_Click);
+            // 
             // cb_AllowMultipleProc
             // 
             resources.ApplyResources(this.cb_AllowMultipleProc, "cb_AllowMultipleProc");
@@ -718,6 +745,16 @@
             this.btn_recache_schema.Name = "btn_recache_schema";
             this.btn_recache_schema.UseVisualStyleBackColor = true;
             this.btn_recache_schema.Click += new System.EventHandler(this.btn_recache_schema_Click);
+            // 
+            // steamGameConfig
+            // 
+            this.steamGameConfig.bin_dir = null;
+            resources.ApplyResources(this.steamGameConfig, "steamGameConfig");
+            this.steamGameConfig.Name = "steamGameConfig";
+            this.steamGameConfig.steam_dir = null;
+            this.steamGameConfig.tf_dir = null;
+            this.steamGameConfig.tf2_dir = null;
+            this.steamGameConfig.Load += new System.EventHandler(this.steamGameConfig_Load);
             // 
             // btn_reset_light
             // 
@@ -1394,6 +1431,19 @@
             this.btn_bg_color1.UseVisualStyleBackColor = true;
             this.btn_bg_color1.Click += new System.EventHandler(this.panel_Bgcolor_Click);
             // 
+            // colorPicker_master
+            // 
+            this.colorPicker_master.BackColor = System.Drawing.Color.LightGray;
+            this.colorPicker_master.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.colorPicker_master.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            resources.ApplyResources(this.colorPicker_master, "colorPicker_master");
+            this.colorPicker_master.FormattingEnabled = true;
+            this.colorPicker_master.Name = "colorPicker_master";
+            this.colorPicker_master.SelectedItem = null;
+            this.colorPicker_master.SelectedValue = System.Drawing.Color.White;
+            this.colorPicker_master.VMT = null;
+            this.colorPicker_master.SelectionChangeCommitted += new System.EventHandler(this.colorPicker1_SelectionChangeCommitted);
+            // 
             // btn_screenshot
             // 
             resources.ApplyResources(this.btn_screenshot, "btn_screenshot");
@@ -1522,6 +1572,12 @@
             this.toolTip1.SetToolTip(this.txtb_hlmv_wsize_x, resources.GetString("txtb_hlmv_wsize_x.ToolTip"));
             this.txtb_hlmv_wsize_x.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBoxNumericSimple_KeyPress);
             this.txtb_hlmv_wsize_x.Leave += new System.EventHandler(this.textbox_text_to_int);
+            // 
+            // bodygroup_manager_panel
+            // 
+            this.bodygroup_manager_panel.BackColor = System.Drawing.Color.Gainsboro;
+            resources.ApplyResources(this.bodygroup_manager_panel, "bodygroup_manager_panel");
+            this.bodygroup_manager_panel.Name = "bodygroup_manager_panel";
             // 
             // txtb_hlmv_wsize_y
             // 
@@ -2821,35 +2877,6 @@
             resources.ApplyResources(this.viewOnTF2WikiToolStripMenuItem, "viewOnTF2WikiToolStripMenuItem");
             this.viewOnTF2WikiToolStripMenuItem.Click += new System.EventHandler(this.viewOnTF2WikiToolStripMenuItem_Click);
             // 
-            // colorPicker_master
-            // 
-            this.colorPicker_master.BackColor = System.Drawing.Color.LightGray;
-            this.colorPicker_master.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.colorPicker_master.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            resources.ApplyResources(this.colorPicker_master, "colorPicker_master");
-            this.colorPicker_master.FormattingEnabled = true;
-            this.colorPicker_master.Name = "colorPicker_master";
-            this.colorPicker_master.SelectedItem = null;
-            this.colorPicker_master.SelectedValue = System.Drawing.Color.White;
-            this.colorPicker_master.VMT = null;
-            this.colorPicker_master.SelectionChangeCommitted += new System.EventHandler(this.colorPicker1_SelectionChangeCommitted);
-            // 
-            // steamGameConfig
-            // 
-            this.steamGameConfig.bin_dir = null;
-            resources.ApplyResources(this.steamGameConfig, "steamGameConfig");
-            this.steamGameConfig.Name = "steamGameConfig";
-            this.steamGameConfig.steam_dir = null;
-            this.steamGameConfig.tf_dir = null;
-            this.steamGameConfig.tf2_dir = null;
-            this.steamGameConfig.Load += new System.EventHandler(this.steamGameConfig_Load);
-            // 
-            // bodygroup_manager_panel
-            // 
-            this.bodygroup_manager_panel.BackColor = System.Drawing.Color.Gainsboro;
-            resources.ApplyResources(this.bodygroup_manager_panel, "bodygroup_manager_panel");
-            this.bodygroup_manager_panel.Name = "bodygroup_manager_panel";
-            // 
             // Main
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -3212,6 +3239,9 @@
         private System.Windows.Forms.Button btn_reset_background;
         private System.Windows.Forms.Button btn_medal;
         private System.Windows.Forms.CheckBox cb_autoexpandonstartup;
+        private System.Windows.Forms.CheckBox cb_check_updates_on_startup;
+        private System.Windows.Forms.Button btn_check_updates;
+        private System.Windows.Forms.Button btn_test_update;
         private System.Windows.Forms.CheckBox cb_cubemap;
         private System.Windows.Forms.LinkLabel linkLabel6;
         private System.Windows.Forms.CheckBox cb_allow_tournament_medals;

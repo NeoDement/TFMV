@@ -240,20 +240,32 @@ namespace TFMV
 
         public static string vpk_tmp_path = "";
 
+        // base directory — set once, all other dirs derive from this
         public static string app_data_dir = Application.StartupPath + "\\config\\";
+        public static string tools_dir = Application.StartupPath + "\\tools\\";
 
-        string schema_dir = app_data_dir + "tf2_schema\\";
-        public static string settings_dir = app_data_dir;
+        // derived dirs — initialized in init_dirs(), called from constructor after debug override
+        public static string schema_dir;
+        public static string settings_dir;
+        public static string tmp_dir;
+        public static string cached_dir;
+        public static string tmp_loadout_dir;
+        public static string tmp_workshop_zip_dir;
+        public static string cubemaps_dir;
 
-        //todo: neodement: this is where bodygroups are breaking i guess, maybe?
-        //neodement: made tmp_dir public, jigglebone editor needed access
-        public static string tmp_dir = app_data_dir + "tmp\\";
-        string cached_dir = app_data_dir + "cached\\";
-        string tmp_loadout_dir = app_data_dir + "tmp_loadout\\";
-        string tmp_workshop_zip_dir = app_data_dir + "\\tmp_workshop_zip\\";
+        // set when items_game.txt is newer than cache — triggers icon re-extraction and user notification
+        private bool schema_updated_from_tf2 = false;
 
-        //neodement: cubemaps_dir for cubemap functions
-        string cubemaps_dir = app_data_dir + "cubemaps\\";
+        private static void init_dirs()
+        {
+            schema_dir = app_data_dir + "tf2_schema\\";
+            settings_dir = app_data_dir;
+            tmp_dir = app_data_dir + "tmp\\";
+            cached_dir = app_data_dir + "cached\\";
+            tmp_loadout_dir = app_data_dir + "tmp_loadout\\";
+            tmp_workshop_zip_dir = app_data_dir + "tmp_workshop_zip\\";
+            cubemaps_dir = app_data_dir + "cubemaps\\";
+        }
 
         //neodement: special variable so we know not to trigger the dialog when changing medal setting if a user didn't click it.
         bool cb_allow_tournament_medals_SupressCheckedChange = false;
@@ -385,21 +397,12 @@ namespace TFMV
             // for debugging: set config / schema directories to TFMV in desktop folder
             //(this is to stop you writing crap like updated schema pngs to the debug folder)
 #if DEBUG
-
             app_data_dir = "C:\\Users\\" + DirUserName + "\\Desktop\\TFMV\\config\\";
-
-            schema_dir = app_data_dir + "tf2_schema\\";
-            settings_dir = app_data_dir;
-
-            tmp_dir = app_data_dir + "tmp\\";
-            cached_dir = app_data_dir + "cached\\";
-            tmp_loadout_dir = app_data_dir + "tmp_loadout\\";
-            tmp_workshop_zip_dir = app_data_dir + "\\tmp_workshop_zip\\";
-
-            //neodement: cubemaps_dir for cubemap functions
-            cubemaps_dir = app_data_dir + "cubemaps\\";
-
+            // tools_dir stays as Application.StartupPath — tools ship with the build output, not the desktop config
 #endif
+
+            // initialize all derived dirs from app_data_dir (must come after debug override)
+            init_dirs();
 
 
 
@@ -696,6 +699,91 @@ namespace TFMV
 
         }
 
+        #region auto-update
+
+        // manual "Check for updates" button
+        private void btn_check_updates_Click(object sender, EventArgs e)
+        {
+            run_update_check(silent: false, force: false);
+        }
+
+        // test mode: force-show the update dialog using real GitHub release data,
+        // even if the local version is equal to or newer than the remote
+        private void btn_test_update_Click(object sender, EventArgs e)
+        {
+            run_update_check(silent: false, force: true);
+        }
+
+        // silent=true: startup check, don't bother the user if nothing to do
+        // silent=false: manual check, show a "you're up to date" message if no update
+        // force=true: always show the update dialog (test mode)
+        private void run_update_check(bool silent, bool force)
+        {
+            var worker = new BackgroundWorker();
+            worker.DoWork += (s, ev) => { ev.Result = Functions.Updater.FetchLatestRelease(); };
+            worker.RunWorkerCompleted += (s, ev) =>
+            {
+                Functions.Updater.ReleaseInfo release = ev.Result as Functions.Updater.ReleaseInfo;
+
+                if (release == null)
+                {
+                    if (!silent)
+                    {
+                        MessageBox.Show("Could not check for updates. Please try again later.", "Update Check Failed");
+                    }
+                    return;
+                }
+
+                Version current = Functions.Updater.GetCurrentVersion();
+                if (!force && release.RemoteVersion <= current)
+                {
+                    if (!silent)
+                    {
+                        MessageBox.Show("You are running the latest version of TFMV (" + current + ").", "No Updates Available");
+                    }
+                    return;
+                }
+
+                prompt_and_apply_update(release, current);
+            };
+            worker.RunWorkerAsync();
+        }
+
+        private void prompt_and_apply_update(Functions.Updater.ReleaseInfo release, Version current)
+        {
+            using (var dlg = new TFMV.Forms.UpdateDialog(current, release.TagName, release.Body))
+            {
+                dlg.ShowDialog(this);
+
+                if (dlg.Result == TFMV.Forms.UpdateDialog.UpdateDialogResult.Download)
+                {
+                    if (Functions.Updater.DownloadAndLaunchUpdater(release))
+                    {
+                        // updater is running; quit ourselves so it can replace our files
+                        Application.Exit();
+                    }
+                }
+                else
+                {
+                    // user picked "Later" — offer to disable future update notifications
+                    if (cb_check_updates_on_startup.Checked)
+                    {
+                        DialogResult r = MessageBox.Show(
+                            "Do you want to stop checking for updates on startup?\n\n" +
+                            "You can always check manually with the 'Check for updates' button in Settings.",
+                            "Disable update check?",
+                            MessageBoxButtons.YesNo);
+                        if (r == DialogResult.Yes)
+                        {
+                            cb_check_updates_on_startup.Checked = false; // this triggers settings_save via CheckedChanged
+                        }
+                    }
+                }
+            }
+        }
+
+        #endregion
+
         // after form is loaded
         private void Main_Shown(object sender, EventArgs e)
         {
@@ -727,10 +815,13 @@ namespace TFMV
 
             this.BringToFront();
 
+            // kick off auto-update check in the background (if enabled)
+            if (cb_check_updates_on_startup.Checked)
+            {
+                run_update_check(silent: true, force: false);
+            }
 
-            // cache player textures for bodygroup masking if needed
-            check_player_texture_cache();
-            check_player_grey_texture_cache();
+
 
             #region custom mods / disable mods
 
@@ -1136,48 +1227,30 @@ namespace TFMV
         // loads, verifies schema version, verifies integrity and tries to load items if schema is valid
         private void check_load_items()
         {
-            // check if schema cache file version matches with TFMV version, if not, delete it to it gets re-generated with the new version
+            // guard: tf_dir must be configured before we can load the schema
+            if (string.IsNullOrEmpty(steamGameConfig.tf_dir) || !steamGameConfig.valid_config)
+            {
+                MessageBox.Show(
+                    "TF2 game directory is not configured.\n\n" +
+                    "Please go to the Settings tab and set the TF2 directory before loading items.",
+                    "Configuration Required");
+                return;
+            }
+
+            // check if schema cache file version matches with TFMV version, if not, delete it so it gets re-generated
             bool schema_cache_valid = check_schema_cache_validity();
 
-            if (!schema_cache_valid)
+            // load items from cache or parse from local items_game.txt
+            load_schema(!schema_cache_valid);
+
+            //set a default value to the class startup tab if it wasn't set before
+            if (lstStartupTab_Class.Text == "")
             {
-                if (bgWorker_download_schema.IsBusy)
-                {
-                    return;
-                }
-
-                var result = MessageBox.Show("The item list needs to be updated.\n(this might take a few minutes to download)", "Download items list?", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes)
-                {
-                    download_schemas();
-                }
-
-            } else {
-
-                load_schema(false);
-
-                //freeze the whole program (oops)
-                //while (bgWorker_load_schema.IsBusy)
-                //{
-                //    Thread.Sleep(1000);
-                //}
-                
-
-                check_schema_version(true);
-
-                //set a default value to the class startup tab if it wasn't set before
-                if (lstStartupTab_Class.Text == "")
-                {
-                    lstStartupTab_Class.SelectedIndex = 0;
-                }
-
-                // set class and slot and load items
-                //set_class("scout", false);
-                set_class(lstStartupTab_Class.Text.ToLower(), true);
-
-
-
+                lstStartupTab_Class.SelectedIndex = 0;
             }
+
+            // set class and slot and load items
+            set_class(lstStartupTab_Class.Text.ToLower(), true);
         }
 
 
@@ -1578,7 +1651,7 @@ namespace TFMV
             if ((txtb_main_model.Text.ToLower().Contains(selected_player_class + ".mdl")) || ((txtb_main_model.Text.ToLower().Contains("demo.mdl"))))
             {
                 // set bodygroups pannel and create bodygroups mask
-                bodygroup_manager_panel.setup(loadout_bodygroups_off, tfmv_dir, cached_dir, selected_player_class, (selected_team_skin_index == 0) ? "red" : "blue");
+                bodygroup_manager_panel.setup(loadout_bodygroups_off, tfmv_dir, selected_player_class, (selected_team_skin_index == 0) ? "red" : "blue");
             }
 
             // set TFMV background model color
@@ -1975,6 +2048,7 @@ namespace TFMV
             if (items_game.Count == 0)
             {
                 check_load_items();
+                return; // bgWorker is loading async; RunWorkerCompleted will refresh the list
             }
 
             load_items_to_listView(items_game, "", "", false);
@@ -2108,7 +2182,7 @@ namespace TFMV
             progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Maximum = filePaths.Length; }));
             progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Value = 0; }));
 
-            while ((bgWorker_download_schema.IsBusy) || (bgWorker_load_items_to_listView.IsBusy) || (bgWorker_load_schema.IsBusy))
+            while ((bgWorker_load_items_to_listView.IsBusy) || (bgWorker_load_schema.IsBusy))
             {
                 Thread.Sleep(300);
             }
@@ -2435,7 +2509,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         // buttons load class
         private void btn_class_load_Click(object sender, EventArgs e)
         {
-            if (bgWorker_download_schema.IsBusy) { return; }
             if (bgWorker_load_schema.IsBusy) { return; }
             if (items_loading) { return; }
 
@@ -2513,7 +2586,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             //this variable stops right click context menu popping up when the Workshop tab is open
             supress_TF2Item_ContextMenu = false;
 
-            if (bgWorker_download_schema.IsBusy) { return; }
             if (bgWorker_load_schema.IsBusy) { return; }
             if (items_loading) { return; }
 
@@ -4555,413 +4627,410 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             #endregion
 
-            while (bgWorker_download_schema.IsBusy)
+            #region load local items_game.txt
+
+            // read items_game.txt directly from the TF2 installation
+            string items_game_txt_path = steamGameConfig.tf_dir + "scripts\\items\\items_game.txt";
+            if (!File.Exists(items_game_txt_path))
             {
-                Thread.Sleep(1000);
+                MessageBox.Show("Could not find items_game.txt at:\n" + items_game_txt_path +
+                    "\n\nMake sure TF2 is installed and the game directory is configured correctly.", "Error");
+                return;
             }
 
-            Thread.Sleep(1000);
-
-            #region load schemas and strings
-
             TFMV.VDF_parser vdf_items_game = new TFMV.VDF_parser();
-            vdf_items_game.file_path = schema_dir + "items_game.vdf";
-            vdf_items_game.load_VDF_file();
+            vdf_items_game.file_path = items_game_txt_path;
+            if (!vdf_items_game.load_VDF_file())
+            {
+                MessageBox.Show(
+                    "Failed to parse items_game.txt.\n\n" + (vdf_items_game._lastError ?? "Unknown error"),
+                    "Schema Parse Error");
+                return;
+            }
 
             items_game = new List<TF2.items_game.item>();
 
             #endregion
 
-            List<TFMV.VDF_parser.VDF_node> items_schema_list = new List<TFMV.VDF_parser.VDF_node>();
             List<TFMV.VDF_parser.VDF_node> items_game_list = new List<TFMV.VDF_parser.VDF_node>();
             List<TFMV.VDF_parser.VDF_node> prefabs_list = new List<TFMV.VDF_parser.VDF_node>();
 
-            bool last_schema_part = false;
-            int part_num = 0;
+            #region get "items" List<> and "prefabs" from vdf_items_game
 
-            TFMV.VDF_parser vdf_schema;
-            string schema_filepath = schema_dir + "schema.vdf";
-
-            while (!last_schema_part)
+            if (vdf_items_game.RootNode == null || vdf_items_game.RootNode.nkey != "items_game")
             {
-                // get first schema.vdf
-                if (part_num == 0)
+                MessageBox.Show(
+                    "items_game.txt was read but could not be parsed correctly.\n" +
+                    "The file may be corrupted. Try verifying TF2 game files through Steam.",
+                    "Schema Parse Error");
+                return;
+            }
+
+            if (vdf_items_game.RootNode.nkey == "items_game")
+            {
+                // get items
+                TFMV.VDF_parser.VDF_node node_items_game = vdf_items_game.sGet_Node(vdf_items_game.RootNode, "items");
+                if (node_items_game.nkey == "items")
                 {
-                    vdf_schema = new TFMV.VDF_parser();
-                    vdf_schema.file_path = schema_filepath;
-                    vdf_schema.load_VDF_file();
-                } else { // get schema_x.vdf (schema part file)
-                    vdf_schema = new TFMV.VDF_parser();
-                    schema_filepath = schema_dir + "schema_" + part_num + ".vdf";
-                    if (!File.Exists(schema_filepath))
+                    items_game_list = node_items_game.nSubNodes;
+                    // remove first object which is not an item ("default")
+                    if (items_game_list.Count > 0 && items_game_list[0].nkey == "default")
                     {
-                        last_schema_part = true;
-                        break;
-                    }
-
-                    FileInfo f = new FileInfo(schema_filepath);
-                    if (f.Length == 0)
-                    {
-                        last_schema_part = true;
-                        break;
-                    }
-
-
-                    vdf_schema.file_path = schema_filepath;
-                    vdf_schema.load_VDF_file();
-                }
-
-
-                #region get "items" List<> and "prefabs" from vdf_items_game
-
-                if (vdf_items_game.RootNode.nkey == "items_game")
-                {
-                    // get items
-                    TFMV.VDF_parser.VDF_node node_items_game = vdf_items_game.sGet_Node(vdf_items_game.RootNode, "items");
-                    if (node_items_game.nkey == "items")
-                    {
-                        items_game_list = node_items_game.nSubNodes;
-                        // remove first object which is not an item ("default")
                         items_game_list.RemoveAt(0);
                     }
-
-                    // get prefabs
-                    prefabs_list = vdf_items_game.sGet_Node(vdf_items_game.RootNode, "prefabs").nSubNodes;
                 }
 
-                #endregion
+                // get prefabs
+                prefabs_list = vdf_items_game.sGet_Node(vdf_items_game.RootNode, "prefabs").nSubNodes;
+            }
 
-                #region get items List<> from vdf_schema
+            #endregion
 
-                // check that schema is valid if the key name is "items_game"
-                if (vdf_schema.RootNode.nkey == "result")
+            #region progress / status info
+
+            // disable UI
+            this.BeginInvoke((Action)(() => this.Enabled = false));
+
+            lab_status.BeginInvoke((Action)(() => lab_status.Visible = true));
+            lab_status.BeginInvoke((Action)(() => lab_status.Text = "Loading items from local game files"));
+
+            progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Value = 0));
+            progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Maximum = items_game_list.Count));
+            progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Visible = true));
+
+            #endregion
+
+            #region for each item in items_game_list (from local items_game.txt)
+
+            //keep track of what medal models have already been seen //todo: make this obsolete
+            List<string> seen_medal_models = new List<string>();
+
+
+            // for each item in items_game_list (node key = defindex)
+            for (int i = 0; i < items_game_list.Count; i++)
+            {
+                if (!sendingWorker.CancellationPending)
                 {
-                    // find "items" node
-                    TFMV.VDF_parser.VDF_node node_items = vdf_schema.sGet_Node(vdf_schema.RootNode, "items");
+                    TFMV.VDF_parser.VDF_node node = items_game_list[i];
 
-                    // check if node is "items"
-                    if (node_items.nkey == "items")
+                    // skip non-numeric keys — these are prefab-style entries, not real items
+                    int defindex_test;
+                    if (!int.TryParse(node.nkey, out defindex_test)) { continue; }
+
+                    TF2.items_game.item item = new TF2.items_game.item();
+
+                    // parse item data directly from items_game.txt
+                    item = get_item_info(node, item, "item_game");
+
+                    bool dbg_item = (node.nkey == "31037"); // debug: Dynamite Abs
+                    string dbg_log = "";
+                    if (dbg_item) dbg_log += $"after initial parse:\nname={item.Name_str}, prefab={item.prefab}\nitem_slot_schema={item.item_slot_schema}, model={item.model_path}\nshow_in_armory={item.show_in_armory}\n\n";
+
+                    // skip "Upgradable" items (generally double stock weapons)
+                    if (item.Name_str != null && item.Name_str.Contains("Upgradeable")) { continue; }
+
+                    // if item is not meant to be displayed in the inventory, skip
+                    if (item.show_in_armory == "0") { continue; }
+
+                    #region get prefab data
+
+                    // get prefab name from the item's parsed data
+                    string prefab_name = item.prefab ?? "";
+
+                    // sometimes there can be multiple prefabs, separated by a white space
+                    string[] prefab_namess = prefab_name.Split(' ');
+
+                    // check if there's multiple prefabs defined
+                    if (prefab_namess.Length > 1)
                     {
-                        items_schema_list = node_items.nSubNodes;
+                        // only get prefab name that starts by weapon_
+                        foreach (var name in prefab_namess)
+                        {
+                            if (name.StartsWith("weapon_"))
+                                prefab_name = name;
+                            if ((name == "hat") || (name == "base_hat"))
+                                prefab_name = name;
+                            if (name == "cosmetic")
+                                prefab_name = name;
+                            if (name == "misc")
+                                prefab_name = name;
+                            if (name == "hat_decoration")
+                                prefab_name = name;
+                            if (name == "mask")
+                                prefab_name = name;
+                            if (name == "beard")
+                                prefab_name = name;
+                            if (name == "backpack")
+                                prefab_name = name;
+                            if (name == "grenades")
+                                prefab_name = name;
+                            if (name == "tournament_medal")
+                                prefab_name = name;
+                            if (name == "pyrovision_goggles")
+                                prefab_name = name;
+                            if (name == "triad_trinket")
+                                prefab_name = name;
+                            if (name == "champ_stamp")
+                                prefab_name = name;
+                            if (name == "marxman")
+                                prefab_name = name;
+                            if (name == "cannonball")
+                                prefab_name = name;
+
+                            //neodement: todo: let's download taunts too
+                            if (name == "taunt")
+                                prefab_name = name;
+                        }
                     }
-                }
-
-                #endregion
 
 
-                List<String> type_name_list = new List<string>();
-
-                #region progress / status info
-
-                // disable UI
-                this.BeginInvoke((Action)(() => this.Enabled = false));
-
-                lab_status.BeginInvoke((Action)(() => lab_status.Visible = true));
-                lab_status.BeginInvoke((Action)(() => lab_status.Text = "Loading schema items Part[" + part_num.ToString() + "]"));
-
-                progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Value = 0));
-                progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Maximum = items_schema_list.Count));
-                progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Visible = true));
-
-                #endregion
-
-                #region for each item in items_schema (from schema.vdf) and items_game
-
-                //keep track of what medal models have already been seen //todo: make this obsolete
-                List<string> seen_medal_models = new List<string>();
-
-
-                // for each item in items_schema
-                for (int i = 0; i < items_schema_list.Count; i++)
-                {
-                    if (!sendingWorker.CancellationPending)//At each iteration of the loop, check if there is a cancellation request pending 
+                    // if item has a prefab get the info and replace values by prefab ones (with  get_item_info(prefab, item, "item_prefab");)
+                    if (prefab_name != "")
                     {
-                        TFMV.VDF_parser.VDF_node node = items_schema_list[i];
-                        TF2.items_game.item item = new TF2.items_game.item();
-                        item = get_item_info(node, item, "item_schema");
+                        TFMV.VDF_parser.VDF_node prefab = new TFMV.VDF_parser.VDF_node();
 
-                        // skip "Upgradable" items (generally double stock weapons)
-                        if (item.Name_str.Contains("Upgradeable")) { continue; }
+                        #region search prefab by name in prefabs_list
 
-
-                        string out_dir = tfmv_dir_short + "models\\TFMV_bodygroups\\";
-
-                        //neodement: compiled some items hidden inside bodygroups as their own separate mdls. they are added as model paths here.
-
-                        //add fake bodygroup for GENTLE MANNE'S SERVICE MEDAL
-                        if (item.Name_str == "Web Easteregg Medal")
+                        foreach (var prefab_item in prefabs_list)
                         {
-                            item.model_path = out_dir + "soldier_medal_bodygroup.mdl";
-                        }
-
-                        //add fake bodygroup for GUNSLINGER
-                        if (item.Name_str == "The Gunslinger")
-                        {
-                            item.model_path = out_dir + "engineer_gunslinger_bodygroup.mdl";
-                        }
-
-                        //manually disable arm bodygroup for SHORT CIRCUIT
-                        if (item.Name_str == "The Short Circuit")
-                        {
-                            item.visuals.player_bodygroups = new List<TF2.items_game.player_bodygroup>();
-
-                            item.visuals.player_bodygroups.Add(new TF2.items_game.player_bodygroup("rightarm", "1"));
-                        }
-
-                        //add fake bodygroup for PURITY FIST (hand)
-                        if (item.Name_str == "The Purity Fist")
-                        {
-                            if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
-
-                            item.extra_wearable.mdl_path = out_dir + "heavy_purityfist_bodygroup.mdl";
-
-                            item.visuals.player_bodygroups = new List<TF2.items_game.player_bodygroup>();
-
-                            item.visuals.player_bodygroups.Add(new TF2.items_game.player_bodygroup("hands", "1"));
-                        }
-
-                        //neodement: added extra fake bodygroups for the huntsman arrows and sydney sleeper darts
-                        if (item.item_class == "tf_weapon_compound_bow")
-                        {
-                            if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
-
-                            item.extra_wearable.mdl_path = out_dir + "sniper_arrows_bodygroup.mdl";
-                        }
-
-                        if (item.Name_str == "The Sydney Sleeper")
-                        {
-                            if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
-
-                            item.extra_wearable.mdl_path = out_dir + "sniper_darts_bodygroup.mdl";
-                        }
-
-
-                        string defindex = vdf_schema.sGet_KeyVal(node, "defindex");
-
-
-                        #region get item data from  items_game_list by defindex
-
-                        // get item by defindex
-                        TFMV.VDF_parser.VDF_node item_game = new TFMV.VDF_parser.VDF_node();
-
-                        foreach (var item_game_node in items_game_list)
-                        {
-                            if (item_game_node.nkey == defindex)
+                            if (prefab_item.nkey == prefab_name)
                             {
-                                item_game = item_game_node;
+                                prefab = prefab_item;
                             }
                         }
 
-                        // if item is null go to next item
-                        if (item_game == null) { continue; }
+                        #endregion
 
-                        item = get_item_info(item_game, item, "item_game");
-
-                        // if item is not mean to be displayed in the inventory, skip to next
-                        // checking this again, since show_in_armory might be loaded from the prefab
-                        if (item.show_in_armory == "0") { continue; }
-
-                        #region get prefab data
-
-                        // get prefab name
-                        string prefab_name = vdf_schema.sGet_KeyVal(item_game, "prefab");
-
-                        // sometimes there can be multiple prefabs, separated by a white space
-                        string[] prefab_namess = prefab_name.Split(' ');
-
-                        // check if there's multiple prefabs defined
-                        if (prefab_namess.Length > 1)
+                        // load item data with prefab's data
+                        if (prefab.nSubNodes.Count > 0)
                         {
-                            // only get prefab name that starts by weapon_
-                            foreach (var name in prefab_namess)
-                            {
-                                if (name.StartsWith("weapon_"))
-                                    prefab_name = name;
-                                if ((name == "hat") || (name == "base_hat"))
-                                    prefab_name = name;
-                                if (name == "cosmetic")
-                                    prefab_name = name;
-                                if (name == "misc")
-                                    prefab_name = name;
-                                if (name == "hat_decoration")
-                                    prefab_name = name;
-                                if (name == "mask")
-                                    prefab_name = name;
-                                if (name == "beard")
-                                    prefab_name = name;
-                                if (name == "backpack")
-                                    prefab_name = name;
-                                if (name == "grenades")
-                                    prefab_name = name;
-                                if (name == "tournament_medal")
-                                    prefab_name = name;
-                                if (name == "pyrovision_goggles")
-                                    prefab_name = name;
-                                if (name == "triad_trinket")
-                                    prefab_name = name;
-                                if (name == "champ_stamp")
-                                    prefab_name = name;
-                                if (name == "marxman")
-                                    prefab_name = name;
-                                if (name == "cannonball")
-                                    prefab_name = name;
-
-                                //neodement: todo: let's download taunts too
-                                if (name == "taunt")
-                                    prefab_name = name;
-                            }
+                            item = get_item_info(prefab, item, "item_prefab");
                         }
 
+                        if (dbg_item) dbg_log += $"after prefab '{prefab_name}':\nitem_slot_schema={item.item_slot_schema}, item_slot={item.item_slot}\nitem_class={item.item_class}, prefab={item.prefab}\n\n";
 
-                        // if item has a prefab get the info and replace values by prefab ones (with  get_item_info(prefab, item, "item_prefab");)
-                        if (prefab_name != "")
+                        // resolve chained prefabs (e.g. "misc" → "cosmetic base_misc" → resolve each)
+                        HashSet<string> resolved_prefabs = new HashSet<string> { prefab_name };
+                        string next_prefab_raw = item.prefab ?? "";
+                        while (next_prefab_raw != "")
                         {
-                            TFMV.VDF_parser.VDF_node prefab = new TFMV.VDF_parser.VDF_node();
-
-                            #region search prefab by name in prefabs_list
-
-                            foreach (var prefab_item in prefabs_list)
+                            // chained prefabs can also be multi-word — resolve each one
+                            string[] chain_parts = next_prefab_raw.Split(' ');
+                            bool resolved_any = false;
+                            foreach (string chain_part in chain_parts)
                             {
-                                if (prefab_item.nkey == prefab_name)
+                                if (chain_part == "" || resolved_prefabs.Contains(chain_part)) continue;
+                                resolved_prefabs.Add(chain_part);
+
+                                TFMV.VDF_parser.VDF_node next_prefab = new TFMV.VDF_parser.VDF_node();
+                                foreach (var prefab_item in prefabs_list)
                                 {
-                                    prefab = prefab_item;
+                                    if (prefab_item.nkey == chain_part) { next_prefab = prefab_item; break; }
+                                }
+                                if (next_prefab.nSubNodes.Count > 0)
+                                {
+                                    item = get_item_info(next_prefab, item, "item_prefab");
+                                    if (dbg_item) dbg_log += $"after chained prefab '{chain_part}':\nitem_slot_schema={item.item_slot_schema}, item_slot={item.item_slot}\nitem_class={item.item_class}, prefab={item.prefab}\n\n";
+                                    resolved_any = true;
                                 }
                             }
-
-                            #endregion
-
-                            // load item data with prefab's data
-                            if (prefab.nSubNodes.Count > 0)
-                            {
-                                item = get_item_info(prefab, item, "item_prefab");
-                            }
+                            if (!resolved_any) break;
+                            next_prefab_raw = item.prefab ?? "";
                         }
+                    }
 
-                        #endregion
-                        #endregion
+                    #endregion
 
-                        // get real item name
-                        string real_name = get_item_name_string(item.item_name_var);
-                        if (real_name != "") { item.item_name_var = real_name; }
-                        if (banned_item(real_name)) { continue; }
+                    // re-check show_in_armory after prefab merge (exempt medals — medal logic handles their visibility)
+                    if (item.show_in_armory == "0" && item.equip_rgn != "medal") { continue; }
 
-                        #region skip weapon skins
+                    // skip items with no name
+                    if (item.Name_str == null || item.Name_str == "") { continue; }
 
-                        // skip weapon skin (that HLMV can't display anyways)
-                        if (item.prefab != null)
+                    // skip "Upgradable" again after prefab merge
+                    if (item.Name_str.Contains("Upgradeable")) { continue; }
+
+
+                    string out_dir = tfmv_dir_short + "models\\TFMV_bodygroups\\";
+
+                    //neodement: compiled some items hidden inside bodygroups as their own separate mdls. they are added as model paths here.
+
+                    //add fake bodygroup for GENTLE MANNE'S SERVICE MEDAL
+                    if (item.Name_str == "Web Easteregg Medal")
+                    {
+                        item.model_path = out_dir + "soldier_medal_bodygroup.mdl";
+                    }
+
+                    //add fake bodygroup for GUNSLINGER
+                    if (item.Name_str == "The Gunslinger")
+                    {
+                        item.model_path = out_dir + "engineer_gunslinger_bodygroup.mdl";
+                    }
+
+                    //manually disable arm bodygroup for SHORT CIRCUIT
+                    if (item.Name_str == "The Short Circuit")
+                    {
+                        item.visuals.player_bodygroups = new List<TF2.items_game.player_bodygroup>();
+
+                        item.visuals.player_bodygroups.Add(new TF2.items_game.player_bodygroup("rightarm", "1"));
+                    }
+
+                    //add fake bodygroup for PURITY FIST (hand)
+                    if (item.Name_str == "The Purity Fist")
+                    {
+                        if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
+
+                        item.extra_wearable.mdl_path = out_dir + "heavy_purityfist_bodygroup.mdl";
+
+                        item.visuals.player_bodygroups = new List<TF2.items_game.player_bodygroup>();
+
+                        item.visuals.player_bodygroups.Add(new TF2.items_game.player_bodygroup("hands", "1"));
+                    }
+
+                    //neodement: added extra fake bodygroups for the huntsman arrows and sydney sleeper darts
+                    if (item.item_class == "tf_weapon_compound_bow")
+                    {
+                        if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
+
+                        item.extra_wearable.mdl_path = out_dir + "sniper_arrows_bodygroup.mdl";
+                    }
+
+                    if (item.Name_str == "The Sydney Sleeper")
+                    {
+                        if (item.extra_wearable == null) { item.extra_wearable = new TF2.items_game.extra_wearable(); }
+
+                        item.extra_wearable.mdl_path = out_dir + "sniper_darts_bodygroup.mdl";
+                    }
+
+                    // get real item name
+                    string real_name = get_item_name_string(item.item_name_var);
+                    if (real_name != "") { item.item_name_var = real_name; }
+                    if (banned_item(real_name)) { continue; }
+
+                    #region skip weapon skins
+
+                    // skip weapon skin (that HLMV can't display anyways)
+                    if (item.prefab != null)
+                    {
+                        if (item.prefab.Contains("paintkit_weapon"))
                         {
-                            if (item.prefab.Contains("paintkit_weapon"))
-                            {
-                                continue;
-                            }
+                            continue;
                         }
+                    }
 
-                        #endregion
+                    #endregion
 
+                    // set icon_url to a local PNG path derived from image_inventory
+                    if (!string.IsNullOrEmpty(item.image_inventory))
+                    {
+                        string icon_filename = item.image_inventory.Replace("/", "_") + ".png";
+                        item.icon_url = schema_dir + "icons\\" + icon_filename;
+                    }
 
-                        bool valid_model = false;
+                    bool valid_model = false;
 
-                        // if item has no model defined, used extra_wearable as model, for instance hte item "The B.A.S.E. Jumper" has no model defined, uses extra_wearable as model
-                        if ((item.model_path == "") && (item.extra_wearable != null) && (item.extra_wearable.mdl_path != ""))
+                    // if item has no model defined, used extra_wearable as model, for instance the item "The B.A.S.E. Jumper" has no model defined, uses extra_wearable as model
+                    if ((item.model_path == "") && (item.extra_wearable != null) && (item.extra_wearable.mdl_path != ""))
+                    {
+                        // item.model = item.extra_wearable.mdl_path;
+                        valid_model = true;
+
+                    }
+
+                    // if it has no model defined, check model styles
+                    if (item.model_path == "" && !valid_model)
+                    {
+
+                        if (item.visuals != null)
                         {
-                            // item.model = item.extra_wearable.mdl_path;
-                            valid_model = true;
-
-                        }
-
-                        // if it has no model defined, check model styles
-                        if (item.model_path == "" && !valid_model)
-                        {
-
-                            if (item.visuals != null)
+                            if (item.visuals.styles != null)
                             {
-                                if (item.visuals.styles != null)
+                                if (item.visuals.styles.Count > 0)
                                 {
-                                    if (item.visuals.styles.Count > 0)
+                                    // ready each style and look for model styles
+                                    foreach (var style in item.visuals.styles)
                                     {
-                                        // ready each style and look for model styles
-                                        foreach (var style in item.visuals.styles)
+                                        if (style.model_player != null)
                                         {
-                                            if (style.model_player != null)
+                                            if (style.model_player != "")
                                             {
-                                                if (style.model_player != "")
-                                                {
-                                                    valid_model = true;
-                                                    break;
-                                                }
+                                                valid_model = true;
+                                                break;
                                             }
                                         }
                                     }
                                 }
                             }
                         }
+                    }
 
-                        if ((item.model_path != "")) { valid_model = true; }
+                    if ((item.model_path != "")) { valid_model = true; }
 
 
-                        #region add item to item list
+                    if (dbg_item) dbg_log += $"pre-add:\nvalid_model={valid_model}, model_path={item.model_path}\nitem_slot_schema={item.item_slot_schema}, equip_rgn={item.equip_rgn}\nused_by_classes={item.used_by_classes?.Count}, styles={item.visuals?.styles?.Count}, skin={item.visuals?.skin}\n\n";
 
-                        // add item only if it has a model or at least one all class model definition
-                        if ((valid_model) || (item.model_player_per_class.Count >= 1))
+                    #region add item to item list
+
+                    // add item only if it has a model or at least one all class model definition
+                    if (!valid_model && item.model_player_per_class.Count < 1)
+                    {
+                        if (dbg_item) { dbg_log += "RESULT: SKIPPED (no valid model)"; MessageBox.Show(dbg_log, "Debug: Dynamite Abs (31037)"); }
+                        // no model — skip
+                    }
+                    else if ((valid_model) || (item.model_player_per_class.Count >= 1))
+                    {
+                        //neodement: allowed some medals to load
+                        if (item.equip_rgn == "medal") // && (item.item_type_name == "#TF_Wearable_Badge")
                         {
-                            //neodement: allowed some medals to load
-                            if (item.equip_rgn == "medal") // && (item.item_type_name == "#TF_Wearable_Badge")
+                            //only add medals that are set to "show in armory". this prevents the list getting completely spammed up with tournament medals.
+                            if (item.show_in_armory == "1")
                             {
-                                //only add medals that are set to "show in armory". this prevents the list getting completely spammed up with tournament medals.
-                                if (item.show_in_armory == "1")
-                                {
-
-                                    //todo: proper fix for these disabled medals? the styles currently don't work.
-                                    if (item.model_path != "models/player/items/all_class/id_badge.mdl" && item.model_path != "models/player/items/all_class/dueling_medal.mdl")
-                                    {
-                                        items_game.Add(item); // add to items list
-                                    }
-                                }
-                                //for tournament medals, change the item slot to "medal" instead of "misc" so the medal button can see them.
-                                else
-                                {
-                                    //only download tournament medals if you were told to.
-                                    if (cb_allow_tournament_medals.Checked == true)
-                                    {
-                                        //if we already have a medal using this model, don't add it to the list.
-                                        if (!seen_medal_models.Contains(item.model_path))
-                                        {
-                                            seen_medal_models.Add(item.model_path);
-                                            item.item_slot_schema = "medal";
-                                            items_game.Add(item);
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
+                                item.item_slot_schema = "medal";
                                 items_game.Add(item); // add to items list
                             }
+                            //for tournament medals, change the item slot to "medal" instead of "misc" so the medal button can see them.
+                            else
+                            {
+                                //only download tournament medals if you were told to.
+                                if (cb_allow_tournament_medals.Checked == true)
+                                {
+                                    //if we already have a medal using this model, don't add it to the list.
+                                    string medal_key = !string.IsNullOrEmpty(item.model_path) ? item.model_path : item.Name_str;
+                                    if (!seen_medal_models.Contains(medal_key))
+                                    {
+                                        seen_medal_models.Add(medal_key);
+                                        item.item_slot_schema = "medal";
+                                        items_game.Add(item);
+                                    }
+                                }
+                            }
                         }
-
-                        #endregion
-
-                        // update progress bar
-                        progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Value = i));
-                        sendingWorker.ReportProgress(i);
-                    }
-                    else
-                    {  // cancel background worker
-                        e.Cancel = true;
-                        break;
+                        else
+                        {
+                            if (dbg_item) { dbg_log += "RESULT: ADDED to items_game list"; MessageBox.Show(dbg_log, "Debug: Dynamite Abs (31037)"); }
+                            items_game.Add(item); // add to items list
+                        }
                     }
 
+                    #endregion
+
+                    // update progress bar
+                    progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Value = i));
+                    sendingWorker.ReportProgress(i);
+                }
+                else
+                {  // cancel background worker
+                    e.Cancel = true;
+                    break;
                 }
 
-                #endregion
-
-                part_num++;
-
             }
-            e.Result = sb.ToString();// Send our result to the main thread!
 
+            #endregion
 
-            download_icons(sender, e);
+            e.Result = sb.ToString();
+
+            extract_icons_from_vpk(sender, e);
 
             // serializes items_game and saves them as binary files
             schema_save_cache();
@@ -4976,40 +5045,49 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
         protected void bgWorker_load_schema_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (!e.Cancelled && e.Error == null)//Check if the worker has been cancelled or if an error occured
-            {
-
-            }
-            else if (e.Cancelled)
-            {
-
-            }
-            else
-            {
-
-            }
-
-            string result = (string)e.Result;//Get the result from the background thread
-
-
+            // always clean up UI state first
             this.BeginInvoke((Action)(() => progressBar_dl.Value = 0));
             this.BeginInvoke((Action)(() => progressBar_dl.Visible = false));
             this.BeginInvoke((Action)(() => lab_status.Visible = false));
-
             this.BeginInvoke((Action)(() => this.Enabled = true));
 
-            //set_class("scout", false);
-            //set_slot("primary");
-            //set_slot("misc");
+            if (e.Error != null)
+            {
+                MessageBox.Show(
+                    "An error occurred while loading the item schema:\n\n" + e.Error.Message +
+                    "\n\nYou can retry by clicking any class or slot button.",
+                    "Schema Load Error");
+                return;
+            }
 
+            if (e.Cancelled)
+            {
+                return;
+            }
+
+            if (items_game == null || items_game.Count == 0)
+            {
+                MessageBox.Show(
+                    "Item schema loaded but no items were found.\n\n" +
+                    "This may indicate a problem with your TF2 installation.\n" +
+                    "Try verifying game files through Steam, then click a class button to retry.",
+                    "Schema Load Warning");
+                return;
+            }
+
+            // notify user if schema was refreshed due to a TF2 update
+            if (schema_updated_from_tf2)
+            {
+                schema_updated_from_tf2 = false;
+                MessageBox.Show(
+                    "TF2 has been updated since your last session.\n\n" +
+                    "The item list and icons have been refreshed.",
+                    "Schema Updated");
+            }
 
             // set class and slot and load items
-            //set_class("scout", false);
-
             set_class(lstStartupTab_Class.Text.ToLower(), true);
             set_class(lstStartupTab_Slot.Text.ToLower(), true);
-
-
         }
 
         private bool check_schema_version(bool promptUser)
@@ -5086,7 +5164,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     DialogResult dialogResult = MessageBox.Show("A new version of the schema (item list) is available.\nDo you want to download it now?", "Schema update", MessageBoxButtons.YesNo);
                     if (dialogResult == DialogResult.Yes)
                     {
-                        download_schemas();
+                        refresh_item_list();
                     }
                     else if (dialogResult == DialogResult.No)
                     {
@@ -5124,16 +5202,23 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 switch (name)
                 {
                     case "image_url":
-                        item.icon_url = value; continue;
+                        if (item.icon_url == null || type != "item_prefab") { item.icon_url = value; } continue;
+
+                    case "image_inventory":
+                        if (item.image_inventory == null || type != "item_prefab") { item.image_inventory = value; } continue;
 
                     case "item_class":
-                        item.item_class = value; continue;
+                        if (item.item_class == null || type != "item_prefab") { item.item_class = value; } continue;
 
                     case "item_name":
-                        if (type != "item_prefab") { item.item_name_var = value; } continue;
+                        if (type != "item_prefab") { item.item_name_var = value; }
+                        else if (item.item_name_var == null) { item.item_name_var = value; }
+                        continue;
 
                     case "item_type_name":
-                        if (type != "item_prefab") { item.item_type_name = value; } continue;
+                        if (type != "item_prefab") { item.item_type_name = value; }
+                        else if (item.item_type_name == null) { item.item_type_name = value; }
+                        continue;
 
                     case "name":
                         if (type != "item_prefab") { item.Name_str = value; } continue;
@@ -5142,7 +5227,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         if (item.model_path == null) { item.model_path = value; } continue;
 
                     case "model_world":
-                        item.model_path = value;
+                        if (item.model_path == null || type != "item_prefab") { item.model_path = value; }
                         continue;
 
                     case "extra_wearable":
@@ -5154,6 +5239,32 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         // item_slot from schema.vdf defines the general slot (misc, primary, secondary, melee etc)
                         if (type == "item_schema") { item.item_slot_schema = value; }
 
+                        // in the local items_game.txt, item_slot also contains the general slot
+                        // (primary, secondary, melee, misc, etc.) so use it for item_slot_schema too
+                        // in local items_game.txt, item_slot contains specific equip slots
+                        // (head, misc, melee, primary, etc.) — map non-standard ones to "misc"
+                        if ((type == "item_game" || type == "item_prefab") && string.IsNullOrEmpty(item.item_slot_schema))
+                        {
+                            switch (value)
+                            {
+                                case "primary":
+                                case "secondary":
+                                case "melee":
+                                case "pda":
+                                case "pda2":
+                                case "building":
+                                case "action":
+                                case "taunt":
+                                case "misc":
+                                    item.item_slot_schema = value;
+                                    break;
+                                default:
+                                    // equip region values like "head", "feet", etc. are cosmetics
+                                    item.item_slot_schema = "misc";
+                                    break;
+                            }
+                        }
+
                         // item slot from items_game.vdf defines the equip region
                         if ((item.item_slot == null) || (item.item_slot == ""))
                         {
@@ -5162,7 +5273,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         continue;
 
                     case "equip_region":
-                        item.equip_rgn = value; continue;
+                        if (item.equip_rgn == null || type != "item_prefab") { item.equip_rgn = value; } continue;
 
                     case "anim_slot":
                         if ((item.anim_slot == null) || (item.anim_slot == ""))
@@ -5195,7 +5306,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         item.prefab = value; continue;
 
                     case "show_in_armory":
-                        item.show_in_armory = value; continue;
+                        if (item.show_in_armory == null || type != "item_prefab") { item.show_in_armory = value; } continue;
 
                     // we don't "continue" to the next item on these next cases
                     // since we still need to get extra data after switch
@@ -5241,8 +5352,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                         continue;
 
-                    //todo: inside this visuals block is probably where the skin fix for medals goes. and also australium weapons.
-
                     case "visuals":
                         if (type == "item_game") visuals = node;
                         if (type == "item_prefab") visuals = node;
@@ -5280,6 +5389,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                                 }
 
 
+                                #endregion
+
+                                #region visuals skin override
+                                if (vis_item.nkey == "skin")
+                                {
+                                    item.visuals.skin = Convert.ToByte(vis_item.nvalue);
+                                    continue;
+                                }
                                 #endregion
 
                                 #region attached models
@@ -5502,11 +5619,11 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                 items_game = TFMV.Functions.Serializer.ReadFromBinaryFile<List<TF2.items_game.item>>(app_data_dir + "tf2_schema\\items_game.bin");
 
-                // if cached items array is empty, re cache schema
-                if (items_game.Count == 0) //  || (items_badges.Count == 0)
+                // if cached items array is empty, delete stale cache and re-parse from source
+                if (items_game.Count == 0)
                 {
                     miscFunc.delete_safe(app_data_dir + "tf2_schema\\items_game.bin");
-                    schema_save_cache();
+                    return false;
                 }
 
             }
@@ -5526,26 +5643,29 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
 
 
-        private void download_schemas()
+        // refreshes the item list by invalidating the cache and re-parsing from local items_game.txt
+        private void refresh_item_list()
         {
-            //if a schema version check succeeds, carry on with the work
-            if (check_schema_version(false))
+            // wait for any running schema worker to finish before deleting the cache
+            if (bgWorker_load_schema.IsBusy)
             {
-
-                this.BeginInvoke((Action)(() => progressBar_dl.Visible = true));
-                this.BeginInvoke((Action)(() => progressBar_dl.Value = 0));
-                this.BeginInvoke((Action)(() => lab_status.Visible = true));
-
-                object[] arrObjects = new object[] { null };
-
-                    if (!bgWorker_load_schema.IsBusy)
-                    {
-
-
-                        // call background worker
-                        bgWorker_download_schema.RunWorkerAsync(arrObjects);
-                    }
+                bgWorker_load_schema.CancelAsync();
+                while (bgWorker_load_schema.IsBusy)
+                {
+                    System.Windows.Forms.Application.DoEvents();
+                    Thread.Sleep(50);
+                }
             }
+
+            // delete cached binary to force re-parse
+            string cache_path = app_data_dir + "tf2_schema\\items_game.bin";
+            if (File.Exists(cache_path))
+            {
+                miscFunc.delete_safe(cache_path);
+            }
+
+            // re-load from local file
+            load_schema(true);
         }
 
         //todo: if this has an error it never recovers!
@@ -5810,13 +5930,38 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 return false;
             }
 
+            // check if local items_game.txt is newer than cache (TF2 was updated)
+            if (!string.IsNullOrEmpty(steamGameConfig.tf_dir))
+            {
+                string items_game_txt = steamGameConfig.tf_dir + "scripts\\items\\items_game.txt";
+                if (File.Exists(items_game_txt))
+                {
+                    FileInfo src_fi = new FileInfo(items_game_txt);
+                    if (src_fi.LastWriteTime > f.LastWriteTime)
+                    {
+                        schema_updated_from_tf2 = true;
+
+                        miscFunc.delete_safe(filepath);
+
+                        // clear cached icons so they get re-extracted from the updated VPK
+                        string icons_dir = schema_dir + "icons\\";
+                        if (Directory.Exists(icons_dir))
+                        {
+                            try { Directory.Delete(icons_dir, true); } catch { }
+                        }
+
+                        return false;
+                    }
+                }
+            }
+
             // check schema cache version is compatible
-            // read first 120 bytes of schema cache file as string
-            // string version_string;
+            // read first 80 bytes of schema cache file as string
             byte[] buffer = new Byte[80];
-            FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
-            stream.Read(buffer, 0, 80);
-            stream.Close();
+            using (FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                stream.Read(buffer, 0, 80);
+            }
 
             string version_string = System.Text.Encoding.UTF8.GetString(buffer);
 
@@ -5891,8 +6036,11 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             items_loading = true;
 
-            progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Visible = show_progress; }));
-            progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Maximum = items_list.Count; }));
+            // progress bar: scan is fast so give it only ~5% of the bar, bulk add gets the rest
+            int progress_max = items_list.Count * 20;
+            progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Value = 0; }));
+            progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Maximum = progress_max; }));
+            progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Visible = true; }));
             progressBar_item_list.Invoke(new MethodInvoker(delegate { imgList.ImageSize = new Size(64, 64); }));
 
             Int32 item_id = 0;
@@ -5909,6 +6057,11 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             int progress_perct = 0;
 
+            // batch collections — load icons on bg thread, add to UI in bulk at the end
+            List<Image> batch_icons = new List<Image>();
+            List<ExtdListViewItem> batch_items = new List<ExtdListViewItem>();
+
+
             #region for each item in item_list
 
             // For each item in items_list
@@ -5920,6 +6073,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     #region setup variables
 
                     item_id = i;
+
+                    if (i % 100 == 0) { int v = i; progressBar_item_list.BeginInvoke((Action)(() => progressBar_item_list.Value = Math.Min(v, progressBar_item_list.Maximum))); }
 
                     validated = false;
                     the_item = items_list[i];
@@ -6159,16 +6314,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                             #region load icon
 
-                            try // make sure that there's no error loading the image, if there is an error laoding it, we redownload the icon, in case it was corrupted
-                            {
-                                Invoke(new Action(() => { imgList.Images.Add(get_icon_image(the_item.icon_url)); }));
-                                list_view.Invoke(new MethodInvoker(delegate { list_view.LargeImageList = imgList; }));
-                            }
-                            catch (System.Exception)
-                            {
-                                Invoke(new Action(() => { imgList.Images.Add(get_icon_image(the_item.icon_url)); }));
-                                list_view.Invoke(new MethodInvoker(delegate { list_view.LargeImageList = imgList; }));
-                            }
+                            try { batch_icons.Add(get_icon_image(the_item.icon_url)); }
+                            catch { batch_icons.Add(missing_icon); }
 
                             #endregion
 
@@ -6302,7 +6449,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                             // Add the ListViewItem to the ListView.
                             item_ListView.item_id = item_id;
 
-                            list_view.Invoke(new MethodInvoker(delegate { list_view.Items.Add(item_ListView); })); //list_view.Items.Add(item_ListView);
+                            batch_items.Add(item_ListView);
 
                             list_index++;
                             #endregion
@@ -6319,23 +6466,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     #region load icon
 
 
-                    try // make sure that there's no error loading the image, if there is an erorr laoding it, we redownload the icon, in case it was corrupted
-                    {
-                        Invoke(new Action(() => { imgList.Images.Add(get_icon_image(the_item.icon_url)); }));
-                        list_view.Invoke(new MethodInvoker(delegate { list_view.LargeImageList = imgList; }));
-                    }
-                    catch (System.Exception)
-                    {
-                        try
-                        {
-                            Invoke(new Action(() => { imgList.Images.Add(get_icon_image(the_item.icon_url)); }));
-                            list_view.Invoke(new MethodInvoker(delegate { list_view.LargeImageList = imgList; }));
-                        }
-                        catch
-                        {
-
-                        }
-                    }
+                    try { batch_icons.Add(get_icon_image(the_item.icon_url)); }
+                    catch { batch_icons.Add(missing_icon); }
 
                     #endregion
 
@@ -6350,6 +6482,12 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                     item_ListView.visuals_red_attached_models = the_item.visuals_red_attached_models;
 
+                    // visuals skin override (e.g. medals with "skin" "1" in visuals block)
+                    if (the_item.visuals.skin != 255)
+                    {
+                        item_ListView.skin_override_all = the_item.visuals.skin;
+                    }
+
                     // if model already is loadout, check the item in the items list
                     foreach (Loadout_Item item in loadout_list.Controls)
                     {
@@ -6363,7 +6501,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     // Add the ListViewItem to the ListView.
                     item_ListView.item_id = item_id;
 
-                    list_view.Invoke(new MethodInvoker(delegate { list_view.Items.Add(item_ListView); }));
+                    batch_items.Add(item_ListView);
                     list_index++;
 
                     #endregion
@@ -6371,8 +6509,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     #endregion
 
                     sendingWorker.ReportProgress(i);
-
-                    progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Value = i; }));
                 }
                 catch //(System.Exception error)
                 {
@@ -6383,7 +6519,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             #endregion
 
-
             if ((equip_regions_list != null) && (equip_region_filter == ""))
             {
                 if (selected_item_slot == "misc")
@@ -6393,6 +6528,35 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         comboBox_equip_region_filter.Invoke(new MethodInvoker(delegate { comboBox_equip_region_filter.Items.Add("[" + region.count + "]  " + region.name); }));
                     }
             }
+
+            // phase 2: bulk add icons to imgList
+            // scan filled bar to ~items_list.Count (5%), phase 2 fills the remaining 95%
+            int phase2_start = items_list.Count;
+            int phase2_range = progress_max - phase2_start;
+            int chunk_size = 200;
+            for (int c = 0; c < batch_icons.Count; c += chunk_size)
+            {
+                int end = Math.Min(c + chunk_size, batch_icons.Count);
+                int capturedC = c;
+                int capturedEnd = end;
+                Invoke(new Action(() =>
+                {
+                    for (int j = capturedC; j < capturedEnd; j++)
+                    {
+                        imgList.Images.Add(batch_icons[j]);
+                    }
+                }));
+                int progressVal = phase2_start + (batch_icons.Count > 0 ? (end * phase2_range / batch_icons.Count) : 0);
+                progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Value = Math.Min(progressVal, progress_max); }));
+            }
+
+            // AddRange + EndUpdate take significant time — advance progress bar during them
+            Invoke(new Action(() =>
+            {
+                list_view.LargeImageList = imgList;
+                list_view.Items.AddRange(batch_items.ToArray());
+            }));
+            progressBar_item_list.Invoke(new MethodInvoker(delegate { progressBar_item_list.Value = Math.Min(progress_max - 1, progress_max); }));
 
             Invoke(new Action(() => { list_view.EndUpdate(); }));
 
@@ -6526,7 +6690,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 if (MessageBox.Show("TF2 Item schema not found. \n Do you want to download the item schema (might take a few minutes to download)", "Download Schema?", MessageBoxButtons.YesNo)
                 == DialogResult.Yes)
                 {
-                    this.BeginInvoke((MethodInvoker)delegate { download_schemas(); });
+                    this.BeginInvoke((MethodInvoker)delegate { refresh_item_list(); });
                 }
                 return;
             }
@@ -6565,44 +6729,114 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         }
 
 
-        private Image get_icon_image(string image_url)
+        private void extract_icons_from_vpk(object sender, DoWorkEventArgs e)
+        {
+            if (items_game == null || items_game.Count == 0) { return; }
+
+            BackgroundWorker sendingWorker = (BackgroundWorker)sender;
+            int items_count = items_game.Count;
+
+            // create icons directory if it doesn't exist
+            string icons_dir = schema_dir + "icons\\";
+            if (!Directory.Exists(icons_dir)) { Directory.CreateDirectory(icons_dir); }
+
+            // check if any icons actually need extracting
+            bool any_missing = false;
+            for (int i = 0; i < items_count; i++)
+            {
+                string ip = items_game[i].icon_url;
+                if (!string.IsNullOrEmpty(ip) && (!File.Exists(ip) || new FileInfo(ip).Length == 0))
+                {
+                    any_missing = true;
+                    break;
+                }
+            }
+            if (!any_missing) { return; }
+
+            this.BeginInvoke((Action)(() => this.Enabled = false));
+            lab_status.BeginInvoke((Action)(() => lab_status.Text = "Loading item icons from VPK"));
+            progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Minimum = 0));
+            progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Maximum = items_count));
+            progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Value = 0));
+
+            // open the textures VPK natively — no HLExtract process needed
+            string vpk_path = steamGameConfig.tf_dir + "tf2_textures_dir.vpk";
+            if (!File.Exists(vpk_path))
+            {
+                lab_status.BeginInvoke((Action)(() => lab_status.Text = "VPK not found — icons skipped"));
+                progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Visible = false));
+                return;
+            }
+
+            SourceEngine.VTFedit vtf_reader = new SourceEngine.VTFedit();
+
+            using (SourceEngine.VPKReader vpk = new SourceEngine.VPKReader(vpk_path))
+            {
+                for (int i = 0; i < items_count; i++)
+                {
+                    if (sendingWorker.CancellationPending) { e.Cancel = true; break; }
+
+                    string image_inv = items_game[i].image_inventory;
+                    string icon_path = items_game[i].icon_url;
+
+                    if (string.IsNullOrEmpty(image_inv) || string.IsNullOrEmpty(icon_path))
+                    {
+                        progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Value = i));
+                        continue;
+                    }
+
+                    // skip if PNG already exists and is non-empty
+                    if (File.Exists(icon_path) && new FileInfo(icon_path).Length > 0)
+                    {
+                        progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Value = i));
+                        continue;
+                    }
+
+                    try
+                    {
+                        // read VTF directly from VPK — no temp files, no process spawning
+                        string vtf_vpk_path = "materials/" + image_inv + ".vtf";
+                        byte[] vtf_bytes = vpk.ReadFile(vtf_vpk_path);
+
+                        if (vtf_bytes != null)
+                        {
+                            // convert VTF to Bitmap (handles DXT1, DXT5, BGRA8888)
+                            Bitmap bmp = vtf_reader.vtf_to_bitmap(vtf_bytes);
+                            if (bmp != null)
+                            {
+                                using (Bitmap resized = ResizeImage(bmp, 64, 64))
+                                {
+                                    resized.Save(icon_path, System.Drawing.Imaging.ImageFormat.Png);
+                                }
+                                bmp.Dispose();
+                            }
+                        }
+                    }
+                    catch { }
+
+                    progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Value = i));
+                    sendingWorker.ReportProgress(i);
+                }
+            }
+
+            progressBar_dl.BeginInvoke((Action)(() => progressBar_dl.Visible = false));
+        }
+
+
+        private Image get_icon_image(string icon_path)
         {
             Image image = missing_icon;
 
-            // check if url has invalid chars
-            if ((image_url.IndexOfAny(Path.GetInvalidPathChars()) == -1) == false)
-            {
-                //MessageBox.Show("Error: invalid icon path: " + image_url);
-                return image;
-            }
+            if (string.IsNullOrEmpty(icon_path)) return image;
 
-            string path = schema_dir + "icons/" + Path.GetFileName(image_url);
-            string schema_icon_path = schema_dir + "icons/" + Path.GetFileName(image_url);
-
-            try // make sure that there's no error loading the image, if there is an error loading it, we redownload the icon, in case it was corrupted
+            try
             {
-                // if file doesn't exist or size = 0 then   download
-                if (!File.Exists(schema_icon_path) || ((new FileInfo(schema_icon_path)).Length == 0))
+                if (File.Exists(icon_path) && new FileInfo(icon_path).Length > 0)
                 {
-                    WebClient webClient = new WebClient();
-                    byte[] img_data = webClient.DownloadData(image_url);
-
-                    using (MemoryStream mStream = new MemoryStream(img_data))
-                    {
-                        image = Image.FromStream(mStream);
-                    }
-
-                    image = ResizeImage(image, 64, 64);
-                    image.Save(schema_icon_path, ImageFormat.Png);
-
-                } else {
-
-                    // load icon from file
-                    image = Image.FromFile(schema_icon_path);
+                    image = Image.FromFile(icon_path);
                 }
-
             }
-            catch //(System.Exception)
+            catch
             {
             }
 
@@ -10278,7 +10512,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         // download schema
         private void btn_dl_schema_Click(object sender, EventArgs e)
         {
-            download_schemas();
+            refresh_item_list();
         }
 
         // define custom model to load
@@ -10598,7 +10832,7 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         private void btn_dl_schema_Click_1(object sender, EventArgs e)
         {
             tabControl.SelectedIndex = 0;
-            download_schemas();
+            refresh_item_list();
         }
 
         private void cb_refresh_SkinPaintChange_CheckedChanged(object sender, EventArgs e)
@@ -10828,72 +11062,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
 
         #region cache player bodygroup mask textures
-
-        // checks if player textures (for bodygroup masking) are cached
-        private void check_player_texture_cache()
-        {
-            bool need_to_cache = false;
-            if (!Directory.Exists(cached_dir)) { need_to_cache = true; }
-
-            TF2.player_materials player_mats = new TF2.player_materials();
-            string[] teams = new string[] { "red", "blue" };
-
-            // search for the class material
-            for (int i = 0; i < player_mats.players_mats.Count; i++)
-            {
-                for (int t = 0; t < teams.Length; t++)
-                {
-                    TF2.player_material player_mat = player_mats.players_mats[i];
-
-                    // if player material was no found, skip to next
-                    if ((player_mat == null) || (player_mat.tf_class == "") || (player_mat.mat_name == "") || (player_mat.mat_dir == "")) { continue; }
-
-                    string mat_name = player_mat.mat_name + "_" + teams[t];
-                    string path = (cached_dir + mat_name + "_mask" + ".vtf").Replace("\\/", "\\");
-
-                    //todo: wip fix for head bodygroups not finding the cached copy. (medic_head)
-                    string mat_name_noteamcolor = player_mat.mat_name;
-                    string path_noteamcolor = (cached_dir + mat_name_noteamcolor + "_mask" + ".vtf").Replace("\\/", "\\");
-
-                    // if VTF DXT5 doesn't exist in "/cached/mat_name_team_color_mask.vtf"
-                    if (!File.Exists(path) && !File.Exists(path_noteamcolor))
-                    {
-                        need_to_cache = true;
-                        break;
-                    }
-                }
-
-                if (need_to_cache) { break; }
-            }
-
-            if (need_to_cache)
-            {
-                MessageBox.Show("Player bodygroup masks cache files are missing. \nPlease re-install TFMV to restore missing files.");
-            }
-        }
-
-        private void check_player_grey_texture_cache()
-        {
-            if (!Directory.Exists(cached_dir)) { miscFunc.create_missing_dir(cached_dir); }
-
-            // if one of the files missing, extract it
-            if ((!File.Exists(cached_dir + "rgba_grey_1024_512.vtf")) || (!File.Exists(cached_dir + "rgba_grey_2048_1024.vtf")))
-            {
-                try
-                {
-                    // extract resource to cached dir 
-                    WriteResourceToFile("TFMV.Files.textures.player_masks.zip", cached_dir + "player_masks.zip");
-
-                    // extract zip file contents
-                    ZipFile zip = ZipFile.Read(cached_dir + "player_masks.zip");
-                    zip.ExtractAll(cached_dir);
-
-                } catch {
-                }
-            }
-
-            // miscFunc.delete_safe(cached_dir + "player_masks.zip");
-        }
 
         private void numUpDown_screenshot_delay_ValueChanged(object sender, EventArgs e)
         {
@@ -11325,11 +11493,11 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             if (cb_allow_tournament_medals.Checked)
             {
 
-                var result = MessageBox.Show("Changing this setting will cause the schema to re-download.\n\nAre you sure you want to do this? ", "Warning", MessageBoxButtons.OKCancel);
+                var result = MessageBox.Show("Changing this setting will cause the item list to reload.\n\nAre you sure you want to do this? ", "Warning", MessageBoxButtons.OKCancel);
                 if (result == DialogResult.OK)
                 {
                     tabControl.SelectedIndex = 0;
-                    download_schemas();
+                    refresh_item_list();
                     set_filter_button_sizes();
                 }
                 else
@@ -11341,11 +11509,11 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
             else
             {
-                var result = MessageBox.Show("Changing this setting will cause the schema to re-download.\n\nAre you sure you want to do this? ", "Warning", MessageBoxButtons.OKCancel);
+                var result = MessageBox.Show("Changing this setting will cause the item list to reload.\n\nAre you sure you want to do this? ", "Warning", MessageBoxButtons.OKCancel);
                 if (result == DialogResult.OK)
                 {
                     tabControl.SelectedIndex = 0;
-                    download_schemas();
+                    refresh_item_list();
                     set_filter_button_sizes();
                 }
                 else
