@@ -91,7 +91,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Ionic.Zip">
-      <HintPath>bin\Debug\Libs\Ionic.Zip.dll</HintPath>
+      <HintPath>Libs\Ionic.Zip.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.JScript" />
     <Reference Include="MouseKeyboardLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
