@@ -1420,7 +1420,7 @@
     <value>steamGameConfig</value>
   </data>
   <data name="&gt;&gt;steamGameConfig.Type" xml:space="preserve">
-    <value>TFMV.SourceEngine.SteamGameConfig, TFMV, Version=0.71.0.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TFMV.SourceEngine.SteamGameConfig, TFMV, Version=2026.1.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;steamGameConfig.Parent" xml:space="preserve">
     <value>Settings</value>
@@ -3755,7 +3755,7 @@ removed "Done" message when a paint chart fails TODO</value>
     <value>colorPicker_master</value>
   </data>
   <data name="&gt;&gt;colorPicker_master.Type" xml:space="preserve">
-    <value>TFMV.PaintColorPicker, TFMV, Version=0.71.0.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TFMV.PaintColorPicker, TFMV, Version=2026.1.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;colorPicker_master.Parent" xml:space="preserve">
     <value>panel_paints</value>
@@ -4181,7 +4181,7 @@ removed "Done" message when a paint chart fails TODO</value>
     <value>bodygroup_manager_panel</value>
   </data>
   <data name="&gt;&gt;bodygroup_manager_panel.Type" xml:space="preserve">
-    <value>TFMV.UserControls.Bodygroup_manager, TFMV, Version=0.71.0.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TFMV.UserControls.Bodygroup_manager, TFMV, Version=2026.1.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;bodygroup_manager_panel.Parent" xml:space="preserve">
     <value>panel_tools</value>
