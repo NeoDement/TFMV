@@ -80,3 +80,6 @@ $RECYCLE.BIN/
 *~
 *.bak
 *.swp
+
+# Claude Code local settings
+.claude/
