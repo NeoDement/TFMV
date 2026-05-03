@@ -28,6 +28,7 @@ namespace TFMV.UserControls
         public Bodygroup_manager()
         {
             InitializeComponent();
+            this.AutoScroll = true;
         }
 
 
@@ -53,25 +54,45 @@ namespace TFMV.UserControls
 
         #region forms
 
-        public void add_bodygroups(string name, bool _checked)
+        public void add_bodygroups(string name, bool _checked, bool bold = false)
         {
-            Point checkbox_pos = new Point();
-            int posy_increment = 0; //starting position for the first checkbox
-            Panel p = (Panel)this.Controls["this"];
-
-            // search checkboxes
-            // if checkboxes exist, get the position
-            foreach (var checkbox in this.Controls.OfType<CheckBox>())
-            {
-                checkbox_pos = checkbox.Location;
-                posy_increment = 20;
-            }
-
-            //add checkbox and set position Y
-            add_checkbox(name, checkbox_pos.Y + posy_increment, _checked);
+            add_checkbox(name, next_control_y(), _checked, bold);
         }
 
-        private void add_checkbox(string name, int posy, bool _checked)
+        // Y position for the next vertically-stacked control. Walks every existing
+        // control (checkbox or divider panel) so dividers don't get overlapped by
+        // the next checkbox. Stride is 20px after a checkbox (its own height) but
+        // only ~9px after a 1px divider, so the gap below the divider matches the
+        // gap above it instead of looking lopsided.
+        private int next_control_y()
+        {
+            int max_y = -1;
+            Control top_control = null;
+            foreach (Control c in this.Controls)
+            {
+                if (c.Location.Y > max_y)
+                {
+                    max_y = c.Location.Y;
+                    top_control = c;
+                }
+            }
+            if (max_y < 0) { return 0; }
+            int stride = (top_control is CheckBox) ? 20 : 9;
+            return max_y + stride;
+        }
+
+        // Adds a thin horizontal separator line — used between official (bold)
+        // bodygroups and TFMV's synthetic / unofficial entries below them.
+        private void add_divider()
+        {
+            Panel divider = new Panel();
+            divider.Location = new Point(5, next_control_y() + 5);
+            divider.Size = new Size(125, 1);
+            divider.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.Controls.Add(divider);
+        }
+
+        private void add_checkbox(string name, int posy, bool _checked, bool bold = false)
         {
             CheckBox cb = new CheckBox();
 
@@ -80,8 +101,13 @@ namespace TFMV.UserControls
             cb.Location = new Point(5, posy);
             cb.Text = name;
 
-            //neodement: fix for long bodygroup names getting cut off (such as medic_backpack)
-            cb.Width = 110;
+            //neodement: fix for long bodygroup names getting cut off (such as backpack_connector)
+            cb.Width = 135;
+
+            if (bold)
+            {
+                cb.Font = new Font(cb.Font, FontStyle.Bold);
+            }
 
             this.Controls.Add(cb);
 
@@ -99,7 +125,9 @@ namespace TFMV.UserControls
         #region bodygroups manager
 
         // creates the bodygroup manager user control within the control "bodygroups_panel"
-        // and adds checkboxes for each existing bodygroup for a TF2 player/class model
+        // and adds checkboxes for each existing bodygroup for a TF2 player/class model.
+        // Display order, bold rendering, and $no_draw-head behaviour are all driven by
+        // bodygroups.txt — see player_bodygroups.cs for the format and tag list.
         private void bodygroups_manager_setup(string tf_class, List<String> loadout_bodygroups_off)
         {
 
@@ -108,26 +136,44 @@ namespace TFMV.UserControls
             // clear bodygroups panel
             this.Controls.Clear();
 
-
             // get class's bodygroups from bodygroups.txt via player_bodygroups
             bodygroups_class = player_bodygroups.get_list(tf_class) ?? new List<TF2.player_bodygroup>();
 
-            if (tf_class == "heavy") { tf_class = "hvyweapon"; }
+            string tf_class_internal = tf_class;
+            if (tf_class_internal == "heavy") { tf_class_internal = "hvyweapon"; }
 
-            // for each TF2.player_bodygroups.tfmv_bodygroup add a checkbox for the bodygroup-name
             foreach (var item in bodygroups_class)
             {
+                // divider entries render as a horizontal line between sections — no checkbox
+                if (item.has_tag("divider"))
+                {
+                    this.add_divider();
+                    continue;
+                }
+
+                // nodraw=<key> entries hide a satellite material set on top of (or
+                // instead of) any body-sheet mask. additive when a mask exists
+                // (sniper glasses), standalone when no body-sheet mask exists
+                // (heads on *_head_red, medic backpack on medic_backpack_red).
+                string nodraw_key = item.nodraw_key;
+
+                // skip dead entries: no mask AND no nodraw behaviour
+                if (item.mask_name == "" && nodraw_key == null) { continue; }
+
+                bool _bodygroup_on = !loadout_bodygroups_off.Contains(item.name);
                 if (item.mask_name != "")
                 {
-                    bool _bodygroup_on = true;
-                    string bodygroupname_without_class = item.mask_name.Replace(tf_class + "_", "");
-
-                    if (loadout_bodygroups_off.Contains(bodygroupname_without_class)) //item.mask_name.Split('_')[1]
-                    {
+                    string bodygroupname_without_class = item.mask_name.Replace(tf_class_internal + "_", "");
+                    if (loadout_bodygroups_off.Contains(bodygroupname_without_class))
                         _bodygroup_on = false;
-                    }
+                }
 
-                    this.add_bodygroups(item.name, _bodygroup_on);
+                this.add_bodygroups(item.name, _bodygroup_on, item.has_tag("bold"));
+
+                if (nodraw_key != null)
+                {
+                    // tag the checkbox so create_bodygroups_mask routes it to apply_nodraw
+                    this.Controls.OfType<CheckBox>().Last().Tag = nodraw_key;
                 }
             }
 
@@ -139,22 +185,110 @@ namespace TFMV.UserControls
 
         }
 
+        // pattern sets for each nodraw=<key> option. on toggle, apply_nodraw
+        // writes (or removes) $no_draw VMTs for any class material whose path
+        // contains one of the patterns. add a new entry here to introduce a
+        // new nodraw=<key> kind — no other code change required.
+        private static readonly Dictionary<string, string[]> NODRAW_PATTERNS =
+            new Dictionary<string, string[]>
+            {
+                { "head",     new[] { "_head_", "eyeball_" } },
+                { "backpack", new[] { "_backpack_" } },
+                { "lens",     new[] { "_lens" } },
+            };
+
         public void create_bodygroups_mask(bool refresh_hlmv)
         {
             List<string> bodygroups_off = new List<string>();
 
-            // loop through bodygroup_manager_panel checkboxes
-            // if bodygroup on, add to list
-            foreach (var cb in this.Controls.OfType<CheckBox>())
+            // seed with every nodraw key the loaded class uses, so re-checking a
+            // bodygroup cleans up its $no_draw VMTs from a previous toggle.
+            Dictionary<string, bool> nodraw_state = new Dictionary<string, bool>();
+            foreach (var bg in bodygroups_class)
             {
-                if (!cb.Checked) bodygroups_off.Add(cb.Text);
+                if (bg.nodraw_key != null) { nodraw_state[bg.nodraw_key] = false; }
             }
 
+            // walk checkboxes — nodraw and mask paths fire independently, so a
+            // checkbox can carry both (e.g. sniper glasses: mask + nodraw=lens)
+            foreach (var cb in this.Controls.OfType<CheckBox>())
+            {
+                string tag = cb.Tag as string;
+                if (tag != null && NODRAW_PATTERNS.ContainsKey(tag))
+                {
+                    nodraw_state[tag] = !cb.Checked;
+                }
+
+                if (!cb.Checked)
+                {
+                    var bg = bodygroups_class.FirstOrDefault(b => b.name == cb.Text);
+                    if (bg != null && !string.IsNullOrEmpty(bg.mask_name))
+                    {
+                        bodygroups_off.Add(cb.Text);
+                    }
+                }
+            }
+
+            foreach (var kvp in nodraw_state) { apply_nodraw(kvp.Key, kvp.Value); }
             gen_player_material(bodygroups_off);
 
-            if(refresh_hlmv)
+            if (refresh_hlmv)
             {
                 Main.refresh_hlmv(false);
+            }
+        }
+
+        // writes (or removes) $no_draw VMTs for any class material whose path
+        // contains one of the substrings registered for this nodraw key. used to
+        // hide satellite material sets that don't live on the body sheet — heads
+        // (separate *_head_red), the medic backpack (medic_backpack_red), the
+        // sniper goggle lens (sniper_lens), etc. NODRAW_PATTERNS is the table of
+        // built-in keys; add a new entry there to introduce a new kind.
+        private void apply_nodraw(string key, bool hidden)
+        {
+            string[] patterns;
+            if (!NODRAW_PATTERNS.TryGetValue(key, out patterns)) { return; }
+
+            string tf_class = player_class;
+            if (tf_class == "demo") { tf_class = "demoman"; }
+
+            TF2.player_all_materials all_mats = new TF2.player_all_materials();
+            List<TF2.player_mats> mats_list = all_mats.players_mats_red;
+
+            foreach (var tfclass in mats_list)
+            {
+                if (tfclass.class_name != tf_class) continue;
+
+                foreach (var mat in tfclass.materials)
+                {
+                    string mat_lower = mat.material.ToLower();
+                    bool matched = false;
+                    foreach (var p in patterns)
+                    {
+                        if (mat_lower.Contains(p)) { matched = true; break; }
+                    }
+                    if (!matched) continue;
+
+                    string vmt_path = tfmv_dir + mat.material + ".vmt";
+
+                    if (hidden)
+                    {
+                        Functions.miscFunc.create_missing_dir(Path.GetDirectoryName(vmt_path));
+                        File.WriteAllLines(vmt_path, new string[]
+                        {
+                            "\"VertexLitGeneric\"",
+                            "{",
+                            "\t\"$no_draw\" \"1\"",
+                            "}"
+                        });
+                    }
+                    else
+                    {
+                        // remove override so the original material shows through again
+                        Functions.miscFunc.delete_safe(vmt_path);
+                    }
+                }
+                break;
             }
         }
 
@@ -173,33 +307,53 @@ namespace TFMV.UserControls
 
 
 
-        // loads a bodygroup mask PNG from config\bodygroup_masks\ as a Bitmap
+        // loads a bodygroup mask PNG from assets\bodygroup_masks\ as a Bitmap
         private Bitmap load_mask(string mask_name, string tf_class, string bodygroup_name)
         {
             string name = (mask_name != "") ? mask_name : tf_class + "_" + bodygroup_name;
-            string png_path = Main.app_data_dir + "bodygroup_masks\\" + name + ".png";
+            string png_path = Main.bodygroup_masks_dir + name + ".png";
 
             if (!File.Exists(png_path)) { return null; }
             return new Bitmap(png_path);
         }
 
-        // combines two mask bitmaps by taking the brighter pixel (additive blend)
+        // combines two mask bitmaps by taking the darker pixel (min blend)
         private Bitmap combine_masks(Bitmap a, Bitmap b)
         {
             int w = Math.Max(a.Width, b.Width);
             int h = Math.Max(a.Height, b.Height);
-            Bitmap result = new Bitmap(w, h);
+            Bitmap result = new Bitmap(w, h, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            var ra = a.LockBits(new Rectangle(0, 0, a.Width, a.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            var rb = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            var rr = result.LockBits(new Rectangle(0, 0, w, h), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            byte[] pa = new byte[ra.Stride * a.Height];
+            byte[] pb = new byte[rb.Stride * b.Height];
+            byte[] pr = new byte[rr.Stride * h];
+
+            System.Runtime.InteropServices.Marshal.Copy(ra.Scan0, pa, 0, pa.Length);
+            System.Runtime.InteropServices.Marshal.Copy(rb.Scan0, pb, 0, pb.Length);
 
             for (int y = 0; y < h; y++)
             {
                 for (int x = 0; x < w; x++)
                 {
-                    int va = (x < a.Width && y < a.Height) ? a.GetPixel(x, y).R : 255;
-                    int vb = (x < b.Width && y < b.Height) ? b.GetPixel(x, y).R : 255;
-                    int v = Math.Min(255, va + vb);
-                    result.SetPixel(x, y, Color.FromArgb(255, v, v, v));
+                    byte va = (x < a.Width && y < a.Height) ? pa[y * ra.Stride + x * 4 + 2] : (byte)255; // R channel
+                    byte vb = (x < b.Width && y < b.Height) ? pb[y * rb.Stride + x * 4 + 2] : (byte)255;
+                    byte v = Math.Min(va, vb);
+                    int idx = y * rr.Stride + x * 4;
+                    pr[idx] = v;       // B
+                    pr[idx + 1] = v;   // G
+                    pr[idx + 2] = v;   // R
+                    pr[idx + 3] = 255; // A
                 }
             }
+
+            System.Runtime.InteropServices.Marshal.Copy(pr, 0, rr.Scan0, pr.Length);
+            a.UnlockBits(ra);
+            b.UnlockBits(rb);
+            result.UnlockBits(rr);
 
             return result;
         }
@@ -239,7 +393,6 @@ namespace TFMV.UserControls
 
             // default material name for this class + team
             string default_mat = player_material.mat_name + "_" + team_color;
-            if (tf_class == "medic") { default_mat = "medic_backpack_" + team_color; }
 
             #endregion
 
@@ -253,32 +406,18 @@ namespace TFMV.UserControls
 
             #region group bodygroups by target material
 
-            // bodygroups can target different materials (e.g. heavy hands targets sheen, others target body)
-            // group them so we process each material once with a combined mask
+            // every off bodygroup contributes its mask to default_mat. The
+            // dict-of-lists structure is preserved (one entry today) so a future
+            // per-bodygroup target-material override can drop in without
+            // restructuring the loop below.
             Dictionary<string, List<string>> mat_to_bodygroups = new Dictionary<string, List<string>>();
-
-            foreach (string bodygroup_name in bodygroups_off)
+            if (bodygroups_off.Count > 0)
             {
-                string target = default_mat;
-                foreach (var bg in bodygroups_class)
-                {
-                    if (bg.name == bodygroup_name && bg.target_mat != null)
-                    {
-                        target = bg.target_mat;
-                        break;
-                    }
-                }
-
-                if (!mat_to_bodygroups.ContainsKey(target))
-                {
-                    mat_to_bodygroups[target] = new List<string>();
-                }
-                mat_to_bodygroups[target].Add(bodygroup_name);
+                mat_to_bodygroups[default_mat] = new List<string>(bodygroups_off);
             }
-
-            // if grey material with no bodygroups off, still need to process the default material
-            if (mat_to_bodygroups.Count == 0 && Main.grey_material)
+            else if (Main.grey_material)
             {
+                // grey material with no bodygroups off — still need to process the default material
                 mat_to_bodygroups[default_mat] = new List<string>();
             }
 
@@ -329,6 +468,12 @@ namespace TFMV.UserControls
 
                 if (vtf_bytes != null && combined_mask != null)
                 {
+                    // grey material: replace RGB with flat grey, keep alpha from bodygroup mask
+                    if (Main.grey_material)
+                    {
+                        vtf_edit.fill_rgb(vtf_bytes, 112, 114, 112);
+                    }
+
                     string out_dir = tfmv_dir + player_material.mat_dir;
                     if (!Directory.Exists(out_dir)) { Directory.CreateDirectory(out_dir); }
                     vtf_edit.write_alpha_v2(vtf_bytes, combined_mask, out_dir + mat_name + ".vtf");
@@ -351,13 +496,14 @@ namespace TFMV.UserControls
 
                     if ((bodygroups_for_mat.Count == 0) && (Main.grey_material))
                     {
-                        VMT.set_parameter(vmt_path, "basetexture", "tfmv\\flat_color.vtf");
+                        // grey with no bodygroups off — VTF already filled grey by write_grey_material
                         continue;
                     }
                     else if ((bodygroups_for_mat.Count > 0) && (Main.grey_material))
                     {
+                        // point to the modified VTF (grey RGB + alpha mask) and fall through
+                        // to add transparency parameters
                         VMT.set_parameter(vmt_path, "basetexture", player_material.mat_dir.ToLower().Replace("materials\\models\\", "models\\") + mat_name + ".vtf");
-                        continue;
                     }
 
                     List<string> vmt_lines = new List<string>();

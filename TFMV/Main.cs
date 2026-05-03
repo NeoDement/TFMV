@@ -240,8 +240,12 @@ namespace TFMV
 
         public static string vpk_tmp_path = "";
 
-        // base directory — set once, all other dirs derive from this
+        // base directories — set once, all other dirs derive from these
+        // config/   — user-editable settings, bodygroup definitions, regenerated tf2_schema cache
+        // assets/   — bundled game-style assets (bodygroup masks, cubemaps, embedded-resource extracts)
+        // tools/    — bundled command-line tools (vtfedit, vpk, etc.)
         public static string app_data_dir = Application.StartupPath + "\\config\\";
+        public static string assets_dir = Application.StartupPath + "\\assets\\";
         public static string tools_dir = Application.StartupPath + "\\tools\\";
 
         // derived dirs — initialized in init_dirs(), called from constructor after debug override
@@ -252,19 +256,24 @@ namespace TFMV
         public static string tmp_loadout_dir;
         public static string tmp_workshop_zip_dir;
         public static string cubemaps_dir;
+        public static string bodygroup_masks_dir;
 
         // set when items_game.txt is newer than cache — triggers icon re-extraction and user notification
         private bool schema_updated_from_tf2 = false;
 
         private static void init_dirs()
         {
+            // editable / regenerated → config/
             schema_dir = app_data_dir + "tf2_schema\\";
             settings_dir = app_data_dir;
             tmp_dir = app_data_dir + "tmp\\";
             cached_dir = app_data_dir + "cached\\";
             tmp_loadout_dir = app_data_dir + "tmp_loadout\\";
             tmp_workshop_zip_dir = app_data_dir + "tmp_workshop_zip\\";
-            cubemaps_dir = app_data_dir + "cubemaps\\";
+
+            // bundled assets → assets/
+            cubemaps_dir = assets_dir + "cubemaps\\";
+            bodygroup_masks_dir = assets_dir + "bodygroup_masks\\";
         }
 
         //neodement: special variable so we know not to trigger the dialog when changing medal setting if a user didn't click it.
@@ -397,8 +406,11 @@ namespace TFMV
             // for debugging: set config / schema directories to TFMV in desktop folder
             //(this is to stop you writing crap like updated schema pngs to the debug folder)
 #if DEBUG
+            // only config is overridden to the desktop folder so we don't write
+            // crap like updated schema PNGs to the build output. assets_dir and
+            // tools_dir stay at Application.StartupPath — they ship with the build
+            // and aren't user-editable
             app_data_dir = "C:\\Users\\" + DirUserName + "\\Desktop\\TFMV\\config\\";
-            // tools_dir stays as Application.StartupPath — tools ship with the build output, not the desktop config
 #endif
 
             // initialize all derived dirs from app_data_dir (must come after debug override)
@@ -701,6 +713,33 @@ namespace TFMV
 
         #region auto-update
 
+        // The user can pick "Skip This Version" to suppress the startup nag for one specific
+        // release tag. Stored as a single-line file in config/ so it survives updates (config
+        // is a preserved folder in the updater).
+        private static string skipped_version_file_path()
+        {
+            return Path.Combine(Application.StartupPath, "config", "skipped_version.txt");
+        }
+
+        private static string read_skipped_version()
+        {
+            string path = skipped_version_file_path();
+            if (!File.Exists(path)) return null;
+            try { return File.ReadAllText(path).Trim(); }
+            catch { return null; }
+        }
+
+        private static void write_skipped_version(string tag)
+        {
+            string path = skipped_version_file_path();
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                File.WriteAllText(path, tag ?? "");
+            }
+            catch { /* best-effort */ }
+        }
+
         // manual "Check for updates" button
         private void btn_check_updates_Click(object sender, EventArgs e)
         {
@@ -744,6 +783,17 @@ namespace TFMV
                     return;
                 }
 
+                // honor "Skip This Version" only on silent (startup) checks. Manual checks and
+                // the test-mode button always show the dialog so the user can change their mind.
+                if (silent && !force)
+                {
+                    string skipped = read_skipped_version();
+                    if (!string.IsNullOrEmpty(skipped) && string.Equals(skipped, release.TagName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
+                }
+
                 prompt_and_apply_update(release, current);
             };
             worker.RunWorkerAsync();
@@ -757,15 +807,28 @@ namespace TFMV
 
                 if (dlg.Result == TFMV.Forms.UpdateDialog.UpdateDialogResult.Download)
                 {
-                    if (Functions.Updater.DownloadAndLaunchUpdater(release))
+                    if (Functions.Updater.DownloadAndLaunchUpdater(release, this))
                     {
                         // updater is running; quit ourselves so it can replace our files
                         Application.Exit();
                     }
                 }
+                else if (dlg.Result == TFMV.Forms.UpdateDialog.UpdateDialogResult.Skip)
+                {
+                    write_skipped_version(release.TagName);
+
+                    MessageBox.Show(
+                        this,
+                        "You won't be prompted to update to TFMV " + release.TagName + " again. " +
+                        "The next release will still trigger an update prompt as usual.\n\n" +
+                        "If you change your mind, you can grab this version manually at:\n" +
+                        "https://github.com/NeoDement/TFMV/releases",
+                        "Update Skipped",
+                        MessageBoxButtons.OK);
+                }
                 else
                 {
-                    // user picked "Later" — offer to disable future update notifications
+                    // user picked "Not Now" — offer to disable future update notifications
                     if (cb_check_updates_on_startup.Checked)
                     {
                         DialogResult r = MessageBox.Show(
@@ -1878,7 +1941,32 @@ namespace TFMV
 
                     foreach (var item in loadout_file.items)
                     {
-                        loadout_addItem(item.icon, item.item_name, item.model_path, 0, 1, item.item_id, false);
+                        // restore the full per-item attribute set, not just icon/name/model.
+                        // loadout_addItem hardcodes skin_red=0/skin_blu=1 and ignores all
+                        // other fields, so we capture the returned Loadout_Item and
+                        // populate it directly from the persisted record.
+                        Loadout_Item l = loadout_addItem(item.icon, item.item_name, item.model_path, item.skin_red, item.skin_blu, item.item_id, false);
+                        if (l == null) { continue; }
+
+                        l.item_slot = item.item_slot;
+                        l.skin_override_all = item.skin_override_all;
+                        l.equip_region = item.equip_region;
+                        l.workshop_zip_path = item.workshop_zip_path;
+
+                        // mirror the save-time mapping (data.not_paintable = item.paintability):
+                        // restore the persisted value into both fields so whichever the
+                        // downstream code reads sees the round-tripped value.
+                        l.not_paintable = item.not_paintable;
+                        l.paintability = item.not_paintable;
+
+                        l.has_tint = item.has_tint;
+                        l.tint_rgb_packed = item.tint_rgb_packed;
+
+                        // re-apply the schema tint to body VMTs (mirrors the click-time path)
+                        if (item.has_tint && !string.IsNullOrEmpty(item.model_path))
+                        {
+                            inject_schema_tint(item.model_path, item.tint_rgb_packed);
+                        }
                     }
 
                     // set bodygroups
@@ -2989,6 +3077,18 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             // reset loadout
             btn_reset_loadout_Click(null, EventArgs.Empty);
+        }
+
+        // omit $bumpmap from grey-mode VMTs when checked // checkbox event
+        private void cb_disable_normal_maps_on_grey_mats_CheckedChanged(object sender, EventArgs e)
+        {
+            settings_save(sender, e);
+
+            // re-apply grey immediately so the bumpmap appears/disappears without another click
+            if (grey_material)
+            {
+                set_player_grey_material();
+            }
         }
 
         byte flat_mat_switch = 0;
@@ -4705,6 +4805,14 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             //keep track of what medal models have already been seen //todo: make this obsolete
             List<string> seen_medal_models = new List<string>();
 
+            // dedup: TF2's items_game.txt has multiple defindex entries that resolve to the
+            // same display name + model + class/slot signature (e.g. stock Scattergun
+            // defindex 13 + strange-quality Scattergun defindex 199 both end up "Scattergun"
+            // with c_scattergun.mdl). Class/slot is part of the key so the per-class Shotgun
+            // defindexes (Soldier/Pyro/Heavy/Engineer) — same name, same model, different
+            // used_by_classes — stay distinct.
+            HashSet<string> seen_item_keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
 
             // for each item in items_game_list (node key = defindex)
             for (int i = 0; i < items_game_list.Count; i++)
@@ -4721,10 +4829,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                     // parse item data directly from items_game.txt
                     item = get_item_info(node, item, "item_game");
-
-                    bool dbg_item = (node.nkey == "31037"); // debug: Dynamite Abs
-                    string dbg_log = "";
-                    if (dbg_item) dbg_log += $"after initial parse:\nname={item.Name_str}, prefab={item.prefab}\nitem_slot_schema={item.item_slot_schema}, model={item.model_path}\nshow_in_armory={item.show_in_armory}\n\n";
 
                     // skip "Upgradable" items (generally double stock weapons)
                     if (item.Name_str != null && item.Name_str.Contains("Upgradeable")) { continue; }
@@ -4807,8 +4911,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                             item = get_item_info(prefab, item, "item_prefab");
                         }
 
-                        if (dbg_item) dbg_log += $"after prefab '{prefab_name}':\nitem_slot_schema={item.item_slot_schema}, item_slot={item.item_slot}\nitem_class={item.item_class}, prefab={item.prefab}\n\n";
-
                         // resolve chained prefabs (e.g. "misc" → "cosmetic base_misc" → resolve each)
                         HashSet<string> resolved_prefabs = new HashSet<string> { prefab_name };
                         string next_prefab_raw = item.prefab ?? "";
@@ -4830,7 +4932,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                                 if (next_prefab.nSubNodes.Count > 0)
                                 {
                                     item = get_item_info(next_prefab, item, "item_prefab");
-                                    if (dbg_item) dbg_log += $"after chained prefab '{chain_part}':\nitem_slot_schema={item.item_slot_schema}, item_slot={item.item_slot}\nitem_class={item.item_class}, prefab={item.prefab}\n\n";
                                     resolved_any = true;
                                 }
                             }
@@ -4966,15 +5067,11 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
                     if ((item.model_path != "")) { valid_model = true; }
 
-
-                    if (dbg_item) dbg_log += $"pre-add:\nvalid_model={valid_model}, model_path={item.model_path}\nitem_slot_schema={item.item_slot_schema}, equip_rgn={item.equip_rgn}\nused_by_classes={item.used_by_classes?.Count}, styles={item.visuals?.styles?.Count}, skin={item.visuals?.skin}\n\n";
-
                     #region add item to item list
 
                     // add item only if it has a model or at least one all class model definition
                     if (!valid_model && item.model_player_per_class.Count < 1)
                     {
-                        if (dbg_item) { dbg_log += "RESULT: SKIPPED (no valid model)"; MessageBox.Show(dbg_log, "Debug: Dynamite Abs (31037)"); }
                         // no model — skip
                     }
                     else if ((valid_model) || (item.model_player_per_class.Count >= 1))
@@ -4986,7 +5083,10 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                             if (item.show_in_armory == "1")
                             {
                                 item.item_slot_schema = "medal";
-                                items_game.Add(item); // add to items list
+                                if (seen_item_keys.Add(make_item_dedup_key(item)))
+                                {
+                                    items_game.Add(item); // add to items list
+                                }
                             }
                             //for tournament medals, change the item slot to "medal" instead of "misc" so the medal button can see them.
                             else
@@ -5000,15 +5100,20 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                                     {
                                         seen_medal_models.Add(medal_key);
                                         item.item_slot_schema = "medal";
-                                        items_game.Add(item);
+                                        if (seen_item_keys.Add(make_item_dedup_key(item)))
+                                        {
+                                            items_game.Add(item);
+                                        }
                                     }
                                 }
                             }
                         }
                         else
                         {
-                            if (dbg_item) { dbg_log += "RESULT: ADDED to items_game list"; MessageBox.Show(dbg_log, "Debug: Dynamite Abs (31037)"); }
-                            items_game.Add(item); // add to items list
+                            if (seen_item_keys.Add(make_item_dedup_key(item)))
+                            {
+                                items_game.Add(item); // add to items list
+                            }
                         }
                     }
 
@@ -5513,7 +5618,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         continue;
 
 
-                    //neodement: stop medals with paint colour overrides until this is implemented.
                     case "attributes":
                         if (node.nSubNodes.Count > 0)
                         {
@@ -5521,17 +5625,29 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                             {
 
 
-                                // neodement: get sub nodes for SET ITEM TINT RGB
+                                // The schema's "set item tint RGB" attribute carries a packed
+                                // 24-bit RGB integer (R<<16 | G<<8 | B) inside a "value" subnode.
+                                // Capture it onto the item; the medal-add path applies it to the
+                                // body VMT(s) at load time via VMT.set_color2.
                                 if (obj.nkey == "set item tint RGB")
-                                    // loop through all attributes
+                                {
                                     if (obj.nSubNodes.Count > 0)
                                     {
                                         foreach (var paintcolor in obj.nSubNodes)
                                         {
-                                            item.model_player_per_class.Clear();
-                                            item.model_path = "";
+                                            if (paintcolor.nkey == "value" && !string.IsNullOrEmpty(paintcolor.nvalue))
+                                            {
+                                                int v;
+                                                if (int.TryParse(paintcolor.nvalue, out v))
+                                                {
+                                                    item.tint_rgb_packed = v;
+                                                    item.has_tint = true;
+                                                }
+                                                break;
+                                            }
                                         }
                                     }
+                                }
                             }
 
                         }
@@ -5603,6 +5719,38 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         }
 
 
+
+        // Stable dedup key for items_game entries used by the schema parse loop.
+        // TF2's items_game.txt has multiple defindex entries that resolve to identical
+        // display name + model (e.g. stock Scattergun defindex 13 + strange-quality
+        // Scattergun defindex 199 both end up "Scattergun" with c_scattergun.mdl).
+        // - Class/slot signature is in the key so per-class Shotgun defindexes
+        //   (Soldier/Pyro/Heavy/Engineer) — same name and model, different
+        //   used_by_classes — stay distinct.
+        // - visuals.skin is in the key because tournament medals reuse one model with
+        //   different skin numbers per placement tier (e.g. "LBTF2 Highlander Access
+        //   1st Place" exists with skin=3 AND skin=255 across defindexes; collapsing
+        //   them would lose the tier visual).
+        private static string make_item_dedup_key(TF2.items_game.item it)
+        {
+            string class_sig = "";
+            if (it.used_by_classes != null && it.used_by_classes.Count > 0)
+            {
+                List<string> parts = new List<string>(it.used_by_classes.Count);
+                foreach (var u in it.used_by_classes)
+                {
+                    parts.Add((u.tfclass ?? "") + ":" + (u.slot ?? ""));
+                }
+                parts.Sort(StringComparer.OrdinalIgnoreCase);
+                class_sig = string.Join(",", parts);
+            }
+            return (it.item_name_var ?? "") + "|"
+                 + (it.model_path ?? "") + "|"
+                 + class_sig + "|"
+                 + (it.item_slot_schema ?? "") + "|"
+                 + (it.visuals != null ? it.visuals.skin : (byte)255) + "|"
+                 + (it.has_tint ? it.tint_rgb_packed : 0);
+        }
 
         // serializes items_game and saves as binary files
         private void schema_save_cache()
@@ -6247,6 +6395,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                     ExtdListViewItem item_ListView = new ExtdListViewItem();
                     item_ListView.equip_region = the_item.equip_rgn;
                     item_ListView.not_paintable = the_item.not_paintable;
+                    item_ListView.has_tint = the_item.has_tint;
+                    item_ListView.tint_rgb_packed = the_item.tint_rgb_packed;
 
                     #region bodygroups
 
@@ -6308,6 +6458,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                             item_ListView.anim_slot = the_item.anim_slot;
                             item_ListView.equip_region = the_item.equip_rgn;
                             item_ListView.not_paintable = the_item.not_paintable;
+                            item_ListView.has_tint = the_item.has_tint;
+                            item_ListView.tint_rgb_packed = the_item.tint_rgb_packed;
                             item_ListView.bodygroups_off = new List<string>();
 
                             #region add to listview
@@ -7046,6 +7198,15 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                         loadout_item.skin_override_all = item.skin_override_all;
                         loadout_item.equip_region = item.equip_region;
                         loadout_item.not_paintable = item.not_paintable;
+                        loadout_item.has_tint = item.has_tint;
+                        loadout_item.tint_rgb_packed = item.tint_rgb_packed;
+
+                        // schema-defined tint: paint medals (tournament awards etc.) with the
+                        // packed RGB carried over from items_game's "set item tint RGB" attribute
+                        if (item.has_tint && !string.IsNullOrEmpty(item.model_path))
+                        {
+                            inject_schema_tint(item.model_path, item.tint_rgb_packed);
+                        }
 
                         #region add model attachments
 
@@ -7726,6 +7887,40 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             return "";
         }
 
+
+        // Apply a schema-defined tint (from items_game's "set item tint RGB" attribute)
+        // to every VMT of a medal model. Extracts materials from the VPK as needed,
+        // writes the schema RGB into $color2 + $colortint_base on each .vmt (the
+        // dual write makes the tint survive Model_Painter's reset cascade — see
+        // VMT.set_color_force), then triggers HLMV to reload.
+        private void inject_schema_tint(string model_path, int tint_rgb_packed)
+        {
+            byte r = (byte)((tint_rgb_packed >> 16) & 0xFF);
+            byte g = (byte)((tint_rgb_packed >> 8) & 0xFF);
+            byte b = (byte)( tint_rgb_packed       & 0xFF);
+            string rgb_str = r + " " + g + " " + b;
+
+            try
+            {
+                List<List<string>> skins = get_mats_sourcePaths(model_path);
+                foreach (var skin in skins)
+                {
+                    foreach (var vmt_rel in skin)
+                    {
+                        string vmt_abs = tfmv_dir + vmt_rel;
+                        if (File.Exists(vmt_abs))
+                        {
+                            VMT.set_color_force(vmt_abs, rgb_str);
+                        }
+                    }
+                }
+                refresh_hlmv(false);
+            }
+            catch
+            {
+                // best-effort: if VMT patching fails, the medal still loads with default color
+            }
+        }
 
         // return list of material name/paths and indexes
         private List<List<string>> get_mats_sourcePaths(string modelpath)
@@ -9340,17 +9535,6 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
         {
             grey_material = true;
 
-            // copy flat color texture
-            miscFunc.create_missing_dir(tfmv_dir + "materials\\tfmv\\");
-            if (!File.Exists(tfmv_dir + "materials\\tfmv\\flat_color.vtf"))
-            {
-                try
-                {
-                    WriteResourceToFile("TFMV.Files.textures.flat_color.vtf", tfmv_dir + "materials\\tfmv\\flat_color.vtf");
-                }
-                catch { }
-            }
-
             List<TF2.player_mats> player_mats = player_all_mats.players_mats_red;
 
             foreach (var tfclass in player_mats)
@@ -9428,52 +9612,142 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             VPK.Extract(mat.material + ".vmt", tfmv_dir + Path.GetDirectoryName(mat.material + ".vmt"), 0);
 
+            /* old eyeball treatment (commented out):
+            // make eyeball materials flat shaded with color 70 70 70
+            if (mat.material.ToLower().Contains("eyeball_"))
+            {
+                List<String> eye_code = new List<String>();
+                eye_code.Add("\"UnlitGeneric\"");
+                eye_code.Add("{");
+                eye_code.Add("\"$color2\" \"{ 70 70 70 }\"");
+                eye_code.Add("}");
+
+                System.IO.File.WriteAllLines(vmt_filepath, eye_code);
+
+                return;
+            }
+            */
+
+            // read the original basetexture path from the extracted VMT
+            string basetexture_path = mat.material.Replace("materials\\models\\", "models\\");
+            {
+                string[,] basetex = VMT.get_parameters(vmt_filepath, new List<string>(new string[] { "basetexture" }));
+                if (basetex != null && basetex.Length > 0 && basetex[0, 0] == "basetexture" && basetex[0, 1] != "")
+                {
+                    basetexture_path = basetex[0, 1];
+                }
+            }
+
+            // extract VTF, fill with grey, and write it out
+            {
+                string vtf_relative = basetexture_path.Replace("/", "\\");
+                string mat_dir = "materials\\" + Path.GetDirectoryName(vtf_relative) + "\\";
+                string vtf_name = Path.GetFileNameWithoutExtension(vtf_relative);
+
+                VTFedit vtf_edit = new VTFedit();
+                byte[] vtf_bytes = vtf_edit.extract_and_prepare_vtf(mat_dir, vtf_name, tmp_dir);
+
+                if (vtf_bytes != null)
+                {
+                    vtf_edit.fill_rgb(vtf_bytes, 112, 114, 112);
+                    string out_dir = tfmv_dir + mat_dir;
+                    miscFunc.create_missing_dir(out_dir);
+                    File.WriteAllBytes(out_dir + vtf_name + ".vtf", vtf_bytes);
+                }
+            }
+
+            bool disable_bumpmap = cb_disable_normal_maps_on_grey_mats.Checked;
+
+            // read original bumpmap from the extracted VMT
+            // when "disable normal maps on grey mats" is checked, use a flat normal so $phong still has a valid normal source
+            string bumpmap_path = "models/player/shared/shared_normal";
+            if (disable_bumpmap)
+            {
+                bumpmap_path = "models/effects/flat_normal";
+            }
+            else if (mat.keep_bumptexture)
+            {
+                string[,] bumpmap = VMT.get_parameters(vmt_filepath, new List<string>(new string[] { "bumpmap" }));
+                if (bumpmap != null && bumpmap.Length > 0 && bumpmap[0, 0] == "bumpmap" && bumpmap[0, 1] != "")
+                {
+                    bumpmap_path = bumpmap[0, 1];
+                }
+            }
+
             // generate VMT
             List<String> vmt_code = new List<String>();
             vmt_code.Add("\"VertexLitGeneric\"");
             vmt_code.Add("{");
+            vmt_code.Add("\t\"$basetexture\" \"" + basetexture_path + "\"");
+            vmt_code.Add("\t\"$bumpmap\" \"" + bumpmap_path + "\"");
 
-            // make eyeball materials flat shaded with color 70 70 70
-            if (mat.material.ToLower().Contains("eyeball_"))
+            // bodygroup transparency
+            if (mat.texture_res >= 1)
             {
-                vmt_code = new List<String>();
-                vmt_code.Add("\"UnlitGeneric\"");
-                vmt_code.Add("{");
-                vmt_code.Add("\"$color2\" \"{ 70 70 70 }\"");
-                vmt_code.Add("}");
-
-                System.IO.File.WriteAllLines(vmt_filepath, vmt_code);
-
-                return;
+                vmt_code.Add("\t\"$translucent\" \"1\"");
+                vmt_code.Add("\t\"$alphatest\" \"1\"");
+                bodygroup_manager_panel.create_bodygroups_mask(false);
             }
+
+            vmt_code.Add("");
+            vmt_code.Add("\t\"$yellow\" \"0\"");
+            vmt_code.Add("\t\"$one\" \"1\"");
+            vmt_code.Add("");
+            vmt_code.Add("\t\"$phong\" \"1\"");
+            vmt_code.Add("\t\"$phongexponent\" \"20\"");
+            vmt_code.Add("\t\"$phongboost\" \".3\"");
+            vmt_code.Add("\t\"$phongfresnelranges\" \"[.3 1 8]\"");
+            vmt_code.Add("\t\"$halflambert\" \"0\"");
+            vmt_code.Add("");
+            vmt_code.Add("\t\"$rimlight\" \"1\"");
+            vmt_code.Add("\t\"$rimlightexponent\" \"4\"");
+            vmt_code.Add("\t\"$rimlightboost\" \"2\"");
+            vmt_code.Add("");
+            vmt_code.Add("\t\"$cloakPassEnabled\" \"1\"");
+            vmt_code.Add("\t\"Proxies\"");
+            vmt_code.Add("\t{");
+            vmt_code.Add("\t\t\"spy_invis\"");
+            vmt_code.Add("\t\t{");
+            vmt_code.Add("\t\t}");
+            vmt_code.Add("\t\t\"AnimatedTexture\"");
+            vmt_code.Add("\t\t{");
+            vmt_code.Add("\t\t\t\"animatedtexturevar\" \"$detail\"");
+            vmt_code.Add("\t\t\t\"animatedtextureframenumvar\" \"$detailframe\"");
+            vmt_code.Add("\t\t\t\"animatedtextureframerate\" 30");
+            vmt_code.Add("\t\t}");
+            vmt_code.Add("\t\t\"BurnLevel\"");
+            vmt_code.Add("\t\t{");
+            vmt_code.Add("\t\t\t\"resultVar\" \"$detailblendfactor\"");
+            vmt_code.Add("\t\t}");
+            vmt_code.Add("\t\t\"YellowLevel\"");
+            vmt_code.Add("\t\t{");
+            vmt_code.Add("\t\t\t\"resultVar\" \"$yellow\"");
+            vmt_code.Add("\t\t}");
+            vmt_code.Add("\t\t\"Equals\"");
+            vmt_code.Add("\t\t{");
+            vmt_code.Add("\t\t\t\"srcVar1\" \"$yellow\"");
+            vmt_code.Add("\t\t\t\"resultVar\" \"$color2\"");
+            vmt_code.Add("\t\t}");
+            vmt_code.Add("\t}");
+            vmt_code.Add("}");
+
+            System.IO.File.WriteAllLines(vmt_filepath, vmt_code);
+
+            /* old VMT generation (commented out):
+            // point basetexture to the grey-filled VTF
+            vmt_code.Add("\t\"$basetexture\" \"" + mat.material.Replace("materials\\models\\", "models\\") + "\"");
 
             // if it's a player texture that needs to have bodygroup masking
             if (mat.texture_res >= 1)
             {
-                vmt_code.Add("\t$translucent 1\n\t$alphatest 1\n"); // transparency for bodygroups masking
-
-                if (bodygroup_manager_panel.bodygroups_off_count() > 0)
-                {
-                    vmt_code.Add("\t\"$basetexture\" \"" + mat.material.Replace("materials\\models\\", "models\\") + "\"");
-                }
-                else
-                {
-                    vmt_code.Add("\t\"$basetexture\" \"tfmv\\flat_color.vtf\"");
-                }
+                vmt_code.Add("\t$translucent 1\n\t$alphatest 1\n");
                 bodygroup_manager_panel.create_bodygroups_mask(false);
-            }
-            else
-            {
-                vmt_code.Add("\t\"$basetexture\" \"tfmv\\flat_color.vtf\"");
             }
 
             // add/keep original bump if required by material
             if (mat.keep_bumptexture)
             {
-                // check original VMT for bump
                 string[,] bumpmap = VMT.get_parameters(vmt_filepath, new List<string>(new string[] { "bumpmap" }));
-
-                // make sure paramter exists
                 if (bumpmap != null)
                 {
                     if (bumpmap.Length > 0)
@@ -9503,8 +9777,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
 
             vmt_code.Add("}");
-
             System.IO.File.WriteAllLines(vmt_filepath, vmt_code);
+            */
         }
 
         private void remove_player_grey_material()

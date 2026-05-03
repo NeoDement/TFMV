@@ -46,7 +46,14 @@ namespace TFMV_Updater
                 return 1;
             }
 
-            WaitForTfmvToExit(pid);
+            if (!WaitForTfmvToExit(pid))
+            {
+                MessageBox.Show(
+                    "TFMV is still running and could not be closed automatically.\n\n" +
+                    "Please close TFMV completely, then re-run the update from inside the app.",
+                    "TFMV Updater");
+                return 1;
+            }
 
             try
             {
@@ -95,16 +102,14 @@ namespace TFMV_Updater
             return 0;
         }
 
-        private static void WaitForTfmvToExit(int pid)
+        // Returns true if the process exited (or was already gone), false on timeout.
+        private static bool WaitForTfmvToExit(int pid)
         {
+            bool exited = true;
             try
             {
                 Process p = Process.GetProcessById(pid);
-                // wait up to 30 seconds
-                if (!p.WaitForExit(30000))
-                {
-                    // still running — fall through and hope for the best
-                }
+                exited = p.WaitForExit(30000);
             }
             catch (ArgumentException)
             {
@@ -114,6 +119,7 @@ namespace TFMV_Updater
 
             // small grace period for file handles to release
             Thread.Sleep(500);
+            return exited;
         }
 
         private static bool IsPreservedTopLevelFolder(string relativePath)

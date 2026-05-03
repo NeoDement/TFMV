@@ -861,6 +861,39 @@
   <data name="&gt;&gt;btn_dl_schema.ZOrder" xml:space="preserve">
     <value>18</value>
   </data>
+  <data name="cb_disable_normal_maps_on_grey_mats.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="cb_disable_normal_maps_on_grey_mats.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="cb_disable_normal_maps_on_grey_mats.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="cb_disable_normal_maps_on_grey_mats.Location" type="System.Drawing.Point, System.Drawing">
+    <value>26, 427</value>
+  </data>
+  <data name="cb_disable_normal_maps_on_grey_mats.Size" type="System.Drawing.Size, System.Drawing">
+    <value>202, 17</value>
+  </data>
+  <data name="cb_disable_normal_maps_on_grey_mats.TabIndex" type="System.Int32, mscorlib">
+    <value>21</value>
+  </data>
+  <data name="cb_disable_normal_maps_on_grey_mats.Text" xml:space="preserve">
+    <value>Disable normal maps on grey materials</value>
+  </data>
+  <data name="&gt;&gt;cb_disable_normal_maps_on_grey_mats.Name" xml:space="preserve">
+    <value>cb_disable_normal_maps_on_grey_mats</value>
+  </data>
+  <data name="&gt;&gt;cb_disable_normal_maps_on_grey_mats.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cb_disable_normal_maps_on_grey_mats.Parent" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="&gt;&gt;cb_disable_normal_maps_on_grey_mats.ZOrder" xml:space="preserve">
+    <value>19</value>
+  </data>
   <data name="cb_hlmv_antialias.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -892,7 +925,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_hlmv_antialias.ZOrder" xml:space="preserve">
-    <value>19</value>
+    <value>20</value>
   </data>
   <data name="label15.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -946,7 +979,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel9.ZOrder" xml:space="preserve">
-    <value>20</value>
+    <value>21</value>
   </data>
   <data name="cb_lodclamps.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -958,7 +991,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_lodclamps.Location" type="System.Drawing.Point, System.Drawing">
-    <value>357, 404</value>
+    <value>297, 427</value>
   </data>
   <data name="cb_lodclamps.Size" type="System.Drawing.Size, System.Drawing">
     <value>298, 17</value>
@@ -982,7 +1015,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_lodclamps.ZOrder" xml:space="preserve">
-    <value>21</value>
+    <value>22</value>
   </data>
   <data name="cb_hwm.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -994,7 +1027,7 @@
     <value>NoControl</value>
   </data>
   <data name="cb_hwm.Location" type="System.Drawing.Point, System.Drawing">
-    <value>194, 404</value>
+    <value>297, 404</value>
   </data>
   <data name="cb_hwm.Size" type="System.Drawing.Size, System.Drawing">
     <value>140, 17</value>
@@ -1015,7 +1048,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_hwm.ZOrder" xml:space="preserve">
-    <value>22</value>
+    <value>23</value>
   </data>
   <data name="cb_disable_fov_mod.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1051,7 +1084,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_disable_fov_mod.ZOrder" xml:space="preserve">
-    <value>23</value>
+    <value>24</value>
   </data>
   <data name="cb_adv_settings_start_open.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1084,7 +1117,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_adv_settings_start_open.ZOrder" xml:space="preserve">
-    <value>24</value>
+    <value>25</value>
   </data>
   <data name="cb_disable_custom_mods.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1117,7 +1150,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_disable_custom_mods.ZOrder" xml:space="preserve">
-    <value>25</value>
+    <value>26</value>
   </data>
   <data name="cb_autoexpandonstartup.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1150,7 +1183,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_autoexpandonstartup.ZOrder" xml:space="preserve">
-    <value>26</value>
+    <value>27</value>
   </data>
   <data name="cb_check_updates_on_startup.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1180,16 +1213,19 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_check_updates_on_startup.ZOrder" xml:space="preserve">
-    <value>27</value>
+    <value>28</value>
+  </data>
+  <data name="btn_check_updates.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
   </data>
   <data name="btn_check_updates.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>NoControl</value>
   </data>
   <data name="btn_check_updates.Location" type="System.Drawing.Point, System.Drawing">
-    <value>558, 461</value>
+    <value>684, 184</value>
   </data>
   <data name="btn_check_updates.Size" type="System.Drawing.Size, System.Drawing">
-    <value>140, 24</value>
+    <value>170, 28</value>
   </data>
   <data name="btn_check_updates.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -1207,10 +1243,13 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;btn_check_updates.ZOrder" xml:space="preserve">
-    <value>28</value>
+    <value>29</value>
+  </data>
+  <data name="btn_test_update.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="btn_test_update.Location" type="System.Drawing.Point, System.Drawing">
-    <value>525, 527</value>
+    <value>533, 256</value>
   </data>
   <data name="btn_test_update.Size" type="System.Drawing.Size, System.Drawing">
     <value>130, 24</value>
@@ -1220,6 +1259,9 @@
   </data>
   <data name="btn_test_update.Text" xml:space="preserve">
     <value>Test update (force)</value>
+  </data>
+  <data name="btn_test_update.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
   </data>
   <data name="&gt;&gt;btn_test_update.Name" xml:space="preserve">
     <value>btn_test_update</value>
@@ -1231,7 +1273,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;btn_test_update.ZOrder" xml:space="preserve">
-    <value>29</value>
+    <value>30</value>
   </data>
   <data name="cb_AllowMultipleProc.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1264,7 +1306,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;cb_AllowMultipleProc.ZOrder" xml:space="preserve">
-    <value>30</value>
+    <value>31</value>
   </data>
   <data name="label14.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1318,7 +1360,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel8.ZOrder" xml:space="preserve">
-    <value>31</value>
+    <value>32</value>
   </data>
   <data name="label1.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1372,7 +1414,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;panel1.ZOrder" xml:space="preserve">
-    <value>32</value>
+    <value>33</value>
   </data>
   <data name="btn_recache_schema.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -1405,7 +1447,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;btn_recache_schema.ZOrder" xml:space="preserve">
-    <value>33</value>
+    <value>34</value>
   </data>
   <data name="steamGameConfig.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 4</value>
@@ -1426,7 +1468,7 @@
     <value>Settings</value>
   </data>
   <data name="&gt;&gt;steamGameConfig.ZOrder" xml:space="preserve">
-    <value>34</value>
+    <value>35</value>
   </data>
   <data name="Settings.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 25</value>
@@ -4167,6 +4209,9 @@ removed "Done" message when a paint chart fails TODO</value>
   </data>
   <data name="&gt;&gt;txtb_hlmv_wsize_x.ZOrder" xml:space="preserve">
     <value>7</value>
+  </data>
+  <data name="bodygroup_manager_panel.AutoScroll" type="System.Boolean, mscorlib">
+    <value>True</value>
   </data>
   <data name="bodygroup_manager_panel.Location" type="System.Drawing.Point, System.Drawing">
     <value>5, 65</value>
@@ -8041,22 +8086,28 @@ removed "Done" message when a paint chart fails TODO</value>
   <data name="richTextBox1.Text" xml:space="preserve">
     <value>_______________________________________________________________________________________________________________________
 
-   2026.1 (10/04/2026)
+     2026.1 (05/03/2026)
 _______________________________________________________________________________________________________________________
 
 -Item data is now read directly from your local TF2 installation, replacing the old schema download system.
 
--Improved bodygroup override system.
+-Added an auto-update system. When a new version of TFMV is released, the program will now prompt you to download it.
 
--Added Heavy's bullet belt to bodygroup override system.
+-Improved bodygroup override system. Added many extra faux bodygroups, useful for creating backpack icons.
 
--Fixed edge-case allowing Window size to accept decimal numbers.
+-Improved grey/"doll" textures for classes. Added a settings checkbox to toggle normal maps on/off in grey mode.
+
+-Added support for items which override their default paint value in the schema (some medals).
+
+-Introduced a new version numbering system to make it easier to tell at a glance when TFMV is out of date.
+
+-Renamed the Updates tab to About.
 
 -Fixed Camera Position, Camera Rotation and Light Rotation inputs not correctly saving decimal numbers (thanks That Hat Guy!)
 
--Fixed additional "Loadout to HLMV" button visible when Items panel is expanded (thanks That Hat Guy!)
+-Fixed an extra "Loadout to HLMV" button appearing when the Items panel is expanded (thanks That Hat Guy!)
 
--Introduced a new version numbering system to make it easier to tell at a glance when TFMV is out of date.
+-Fixed an edge case where the Window size input accepted decimal numbers.
 
 
 _______________________________________________________________________________________________________________________
@@ -8796,7 +8847,7 @@ ________________________________________________________________________________
     <value>4</value>
   </data>
   <data name="About.Text" xml:space="preserve">
-    <value>Updates</value>
+    <value>About</value>
   </data>
   <data name="&gt;&gt;About.Name" xml:space="preserve">
     <value>About</value>
@@ -9431,6 +9482,9 @@ ________________________________________________________________________________
         AAAAAAAAAAAAAAAAAAAAAAAAAPAPAADgBwAAwmMAAI5xAACccAAAHDAAADwAAAAgAAAAIAQAACAcAAAQ
         GAAAkDgAAIARAADAAwAA4AcAAPgfAAA=
 </value>
+  </data>
+  <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>TFMV</value>

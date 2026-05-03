@@ -310,12 +310,20 @@ namespace TFMV.SourceEngine
                 }
 
                 // write alpha byte directly for each pixel (byte 3 of each BGRA quad)
+                var bmpData = scaled.LockBits(
+                    new System.Drawing.Rectangle(0, 0, w, h),
+                    System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                byte[] px = new byte[bmpData.Stride * h];
+                System.Runtime.InteropServices.Marshal.Copy(bmpData.Scan0, px, 0, px.Length);
+                scaled.UnlockBits(bmpData);
+
                 for (int y = 0; y < h; y++)
                 {
                     for (int x = 0; x < w; x++)
                     {
-                        Color c = scaled.GetPixel(x, y);
-                        byte alpha = (byte)((c.R + c.G + c.B) / 3);
+                        int src = y * bmpData.Stride + x * 4;
+                        byte alpha = (byte)((px[src + 2] + px[src + 1] + px[src]) / 3); // R+G+B avg
                         vtf_bytes[vtf_pos + (y * w + x) * 4 + 3] = alpha;
                     }
                 }
@@ -326,6 +334,38 @@ namespace TFMV.SourceEngine
             }
 
             File.WriteAllBytes(out_path, vtf_bytes);
+        }
+
+        /// <summary>
+        /// Fills all RGB pixels in a BGRA8888 VTF with a solid color (preserving alpha).
+        /// Used for grey material mode — replaces the red skin texture with flat grey.
+        /// </summary>
+        public void fill_rgb(byte[] vtf_bytes, byte r, byte g, byte b)
+        {
+            int format = BitConverter.ToInt32(vtf_bytes, VTF_OFFSET_FORMAT);
+            if (format != VTF_FORMAT_BGRA8888) { return; }
+
+            ushort width = BitConverter.ToUInt16(vtf_bytes, VTF_OFFSET_WIDTH);
+            ushort height = BitConverter.ToUInt16(vtf_bytes, VTF_OFFSET_HEIGHT);
+            byte mip_count = vtf_bytes[VTF_OFFSET_MIPCOUNT];
+
+            int total_image_size = 0;
+            int mw = width, mh = height;
+            for (int m = 0; m < mip_count; m++)
+            {
+                total_image_size += Math.Max(1, mw) * Math.Max(1, mh) * 4;
+                mw = Math.Max(1, mw / 2);
+                mh = Math.Max(1, mh / 2);
+            }
+
+            int data_start = vtf_bytes.Length - total_image_size;
+            for (int i = data_start; i < vtf_bytes.Length; i += 4)
+            {
+                vtf_bytes[i] = b;       // B
+                vtf_bytes[i + 1] = g;   // G
+                vtf_bytes[i + 2] = r;   // R
+                // [i + 3] = A — preserved
+            }
         }
 
         /// <summary>

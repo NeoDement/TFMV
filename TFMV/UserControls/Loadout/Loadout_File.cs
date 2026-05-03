@@ -45,6 +45,13 @@ namespace TFMV.UserControls.Loadout
 
             public bool not_paintable { get; set; }
 
+            public string equip_region { get; set; }
+
+            // schema "set item tint RGB" — packed 24-bit RGB. Tournament medals
+            // round-trip their baked-in color through these fields.
+            public bool has_tint { get; set; }
+            public int tint_rgb_packed { get; set; }
+
             public loadout_item_data(Loadout_Item _item)
             {
                 this.item_id = _item.item_id;
@@ -60,6 +67,11 @@ namespace TFMV.UserControls.Loadout
                 this.skin_blu = _item.skin_blu;
 
                 this.not_paintable = _item.paintability;
+
+                this.equip_region = _item.equip_region;
+
+                this.has_tint = _item.has_tint;
+                this.tint_rgb_packed = _item.tint_rgb_packed;
             }
         }
 

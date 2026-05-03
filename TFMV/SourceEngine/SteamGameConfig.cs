@@ -182,9 +182,19 @@ namespace TFMV.SourceEngine
 
             valid_config = false;
 
+            string scannedMessage;
+            if (libraries.Count == 1)
+            {
+                scannedMessage = "Scanned Steam library:\n  " + libraries[0];
+            }
+            else
+            {
+                scannedMessage = "Scanned " + libraries.Count + " Steam libraries:\n  - " + string.Join("\n  - ", libraries.ToArray());
+            }
+
             MessageBox.Show(
-                "Could not find your TF2 install in any Steam library folder.\n\n" +
-                "Scanned libraries:\n  - " + string.Join("\n  - ", libraries.ToArray()) +
+                "Could not find your TF2 install under Steam.\n\n" +
+                scannedMessage +
                 "\n\nPlease click 'Select Directory' next to TF Directory and point it at your TF2 \"tf\" folder manually.",
                 "TF2 Install Not Found");
             return false;
@@ -244,9 +254,17 @@ namespace TFMV.SourceEngine
 
                         libPath = libPath.Replace(@"\\", @"\").TrimEnd('\\', '/');
 
-                        if (!string.IsNullOrEmpty(libPath) && Directory.Exists(libPath) && !result.Contains(libPath))
+                        if (string.IsNullOrEmpty(libPath) || !Directory.Exists(libPath)) continue;
+
+                        int existingIdx = result.FindIndex(r => string.Equals(r, libPath, StringComparison.OrdinalIgnoreCase));
+                        if (existingIdx < 0)
                         {
                             result.Add(libPath);
+                        }
+                        else if (result[existingIdx] == result[existingIdx].ToLower() && libPath != libPath.ToLower())
+                        {
+                            // existing entry is all-lowercase, new one has mixed case — prefer the prettier one
+                            result[existingIdx] = libPath;
                         }
                     }
 

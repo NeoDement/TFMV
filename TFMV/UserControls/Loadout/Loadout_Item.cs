@@ -23,6 +23,11 @@ namespace TFMV.UserControls.Loadout
         public string equip_region { get; set; }
         public bool not_paintable { get; set; }
 
+        // schema "set item tint RGB" — packed 24-bit RGB carried over from items_game.
+        // Tournament medals use this to render with a baked-in color rather than a paint can.
+        public bool has_tint { get; set; }
+        public int tint_rgb_packed { get; set; }
+
         // if skin_override_all != 255 then it overrides skin_red_override and skin_blue_override
         public byte skin_override_all { get; set; }
 

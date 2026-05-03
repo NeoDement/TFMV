@@ -327,6 +327,93 @@ namespace TFMV.SourceEngine
 
         }
 
+        // Writes the schema-tint color into BOTH $color2 and $colortint_base. Used
+        // by the schema-tint path (tournament medals).
+        //
+        // Why both: HLMV doesn't evaluate material proxies, so the proxy chain that
+        // would normally propagate $colortint_base into $color2 is inert — HLMV
+        // reads $color2 directly. Meanwhile Model_Painter.Add_VMT and switch_Skin
+        // reset $color2 = $colortint_base after we patch. Writing the schema RGB
+        // into $colortint_base too makes those resets idempotent on tinted VMTs.
+        //
+        // Existing values are updated in place; missing keys are inserted before
+        // the first $-param line.
+        public static void set_color_force(string filepath, string color)
+        {
+            if (!File.Exists(filepath)) { return; }
+            if (color == "" || color == " ") { return; }
+
+            List<string> vmt_lines = new List<string>();
+            bool color2_exists = false;
+            bool colorbase_exists = false;
+            int colorbase_line = -1;
+            int first_param_line = -1;
+
+            try
+            {
+                string rline;
+                System.IO.StreamReader file = new System.IO.StreamReader(filepath);
+                while ((rline = file.ReadLine()) != null)
+                {
+                    vmt_lines.Add(rline);
+                }
+                file.Close();
+
+                RegexOptions options = RegexOptions.None;
+                Regex regex = new Regex(@"\s*?$", options);
+
+                for (int i = 0; i < vmt_lines.Count; i++)
+                {
+                    string line = ((regex.Replace(vmt_lines[i], @" ")).Trim()).ToLower().Replace("  ", " ");
+
+                    if (line.StartsWith("//") || line == "") { continue; }
+
+                    string[] line_split = line.Split('"');
+                    if (line_split.Length <= 1) { continue; }
+
+                    string key = line_split[1];
+                    if (!key.StartsWith("$")) { continue; }
+
+                    if (first_param_line == -1) { first_param_line = i; }
+
+                    if (key == "$color2")
+                    {
+                        color2_exists = true;
+                        vmt_lines[i] = "\t\"$color2\" \"{" + color + "}\"";
+                    }
+                    else if (key == "$colortint_base" || key == "$colortintbase")
+                    {
+                        colorbase_exists = true;
+                        colorbase_line = i;
+                        vmt_lines[i] = "\t\"$colortint_base\" \"{" + color + "}\"";
+                    }
+                }
+
+                // Insert any missing keys. Prefer to land $color2 next to an existing
+                // $colortint_base; otherwise both go just before the first $-param.
+                int color2_anchor = colorbase_line > -1 ? colorbase_line : first_param_line;
+                int colorbase_anchor = first_param_line;
+
+                if (!color2_exists && color2_anchor > -1)
+                {
+                    vmt_lines.Insert(color2_anchor, "\t\"$color2\" \"{" + color + "}\"");
+                }
+
+                if (!colorbase_exists && colorbase_anchor > -1)
+                {
+                    // Insert at the same anchor as the (possibly just-inserted) $color2 —
+                    // last-inserted lands at the lower index, giving file order
+                    // colortint_base, color2, ...
+                    vmt_lines.Insert(colorbase_anchor, "\t\"$colortint_base\" \"{" + color + "}\"");
+                }
+
+                if (color2_anchor == -1 && colorbase_anchor == -1) { return; }
+
+                File.WriteAllLines(filepath, vmt_lines);
+            }
+            catch (IOException) { }
+        }
+
         // returns colorbase value
         public static string get_colorbase(string filepath)
         {

@@ -31,7 +31,7 @@ namespace TFMV.TF2
             players_mats.Add(new player_material("sniper", @"materials\models\player\sniper\", "sniper", 1));
             players_mats.Add(new player_material("soldier", @"materials\models\player\soldier\", "soldier", 1));
 
-           // players_mats.Add(new player_material("spy", @"materials\models\player\spy\", "spy"));
+            players_mats.Add(new player_material("spy", @"materials\models\player\spy\", "spy", 2));
         }
     }
 

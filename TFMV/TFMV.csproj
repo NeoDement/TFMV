@@ -74,7 +74,7 @@
     <OutputPath>bin\x64\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
@@ -83,6 +83,8 @@
   </PropertyGroup>
   <PropertyGroup>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <!-- ship only the English (default) localization; suppresses the otherwise-empty de\ satellite folder in the build output -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AnimatedGif, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
@@ -92,6 +94,7 @@
     </Reference>
     <Reference Include="Ionic.Zip">
       <HintPath>Libs\Ionic.Zip.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.JScript" />
     <Reference Include="MouseKeyboardLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -106,6 +109,7 @@
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing.Common, Version=4.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Drawing.Common.4.5.0\lib\net461\System.Drawing.Common.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Management" />
     <Reference Include="System.Runtime.Serialization" />
@@ -126,6 +130,15 @@
   <ItemGroup>
     <Compile Include="Forms\UpdateDialog.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\UpdateDialog.Designer.cs">
+      <DependentUpon>UpdateDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\UpdateProgressDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\UpdateProgressDialog.Designer.cs">
+      <DependentUpon>UpdateProgressDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Functions\BitmapProcessing.cs" />
     <Compile Include="Functions\misc.cs" />
@@ -283,7 +296,6 @@
     </Compile>
     <EmbeddedResource Include="Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
@@ -304,6 +316,14 @@
       <DependentUpon>ColorPicker.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\UpdateDialog.resx">
+      <DependentUpon>UpdateDialog.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\UpdateProgressDialog.resx">
+      <DependentUpon>UpdateProgressDialog.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="UserControls\DisableBackgroundWarning.resx">
       <DependentUpon>DisableBackgroundWarning.cs</DependentUpon>
     </EmbeddedResource>
@@ -322,10 +342,11 @@
       <DependentUpon>Bodygroup_manager.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="UserControls\Skins Manager\MaterialEditorDialog.de.resx">
+    <!-- MaterialEditorDialog.de.resx kept on disk for potential future localization
+         work, but excluded from the build so we don't ship an empty de\ satellite. -->
+    <None Include="UserControls\Skins Manager\MaterialEditorDialog.de.resx">
       <DependentUpon>MaterialEditorDialog.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
+    </None>
     <EmbeddedResource Include="UserControls\Skins Manager\MaterialEditorDialog.resx">
       <DependentUpon>MaterialEditorDialog.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -359,9 +380,7 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Files\textures\fireLayeredSlowTiled512.vtf" />
-    <EmbeddedResource Include="Files\textures\flat_color.vtf" />
     <EmbeddedResource Include="Files\textures\player_masks.zip" />
-    <EmbeddedResource Include="Files\textures\flat_color_white.vtf" />
     <EmbeddedResource Include="Files\models\tfmv_bg.dx80.vtx" />
     <EmbeddedResource Include="Files\models\tfmv_bg.dx90.vtx" />
     <EmbeddedResource Include="Files\models\tfmv_bg.mdl" />
@@ -454,6 +473,34 @@
     <None Include="Resources\steamcrappy1.png" />
     <None Include="Resources\TFMV_neo_logo.png" />
     <Content Include="TFMV.ico" />
+    <Content Include="Resources\bodygroups.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets\bodygroups.txt</Link>
+    </Content>
+    <Content Include="Resources\bodygroup_masks\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets\bodygroup_masks\%(Filename)%(Extension)</Link>
+    </Content>
+    <!-- Third-party DLLs: referenced for compile (above) but kept out of the
+         output root via <Private>False</Private>. Instead, copy them into
+         libs\ at build time so .NET picks them up via TFMV.exe.config's
+         <probing privatePath="libs"/> at runtime. -->
+    <Content Include="Libs\AnimatedGif.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libs\AnimatedGif.dll</Link>
+    </Content>
+    <Content Include="Libs\Ionic.Zip.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libs\Ionic.Zip.dll</Link>
+    </Content>
+    <Content Include="Libs\MouseKeyboardLibrary.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libs\MouseKeyboardLibrary.dll</Link>
+    </Content>
+    <Content Include="..\packages\System.Drawing.Common.4.5.0\lib\net461\System.Drawing.Common.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libs\System.Drawing.Common.dll</Link>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0,Profile=Client">

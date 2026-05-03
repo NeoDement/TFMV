@@ -108,195 +108,53 @@ namespace TFMV.SourceEngine
         //Extract file from gcf...
         public static bool Extract(string file_path, string extract_path, int vpk_selection)
         {
+            if (string.IsNullOrEmpty(file_path) || string.IsNullOrEmpty(extract_path)) { return false; }
 
-            #region check if tools files exist
+            // 0 = tf2_misc_dir.vpk (models, vmts, pcf...) — 1 = tf2_textures_dir.vpk (VTFs only)
+            string vpk_file = (vpk_selection == 1) ? "tf2_textures_dir.vpk" : "tf2_misc_dir.vpk";
+            string vpk_path = tf_dir + vpk_file;
+            if (!File.Exists(vpk_path)) { return false; }
 
-            if (File.Exists(tools_dir + "HLExtract.exe") == false)
+            try
             {
-                MessageBox.Show("Error: tools\\HLExtract.exe is missing! \n Tools are needed to extract from the game VPKs.");
-                return false;
-            }
+                if (!Directory.Exists(extract_path)) { Directory.CreateDirectory(extract_path); }
 
-            if (File.Exists(tools_dir + "HLLib.dll") == false)
-            {
-                MessageBox.Show("Error: tools\\HLLib.dll is missing!\n Tools are needed to extract from the game VPKs.");
-                return false;
-            }
-
-            if ((extract_path.Replace(" ", "") == "") || (file_path.Replace(" ", "") == ""))
-            {
-                MessageBox.Show("Error: VPKExtract: invalid file or directory paths.");
-            }
-
-            #endregion
-
-            string vpk_file = "tf2_misc_dir.vpk";
-            if (vpk_selection == 0) { vpk_file = "tf2_misc_dir.vpk"; } //models, vmts, pcf ...
-            if (vpk_selection == 1) { vpk_file = "tf2_textures_dir.vpk"; } // VTF only
-
-            if (file_path == "")
-            {
-                MessageBox.Show("Error extracting from vpk: file path is undefined.");
-                return false;
-            }
-
-            string filename = Path.GetFileName(file_path);
-
-            //create temporary directory if it doesn't exist
-            if (!Directory.Exists(tmp_dir)) 
-            {
-                Directory.CreateDirectory(tmp_dir); 
-            }
-
-            string VPK = (tf_dir + vpk_file).Replace("\\", "/");
-            
-            string filename_export = file_path.Replace("\\", "/");
-            string extract_dir = extract_path.Replace("\\", "/");
-            
-
-            if (Directory.Exists(extract_dir) == false) 
-            {         
-                try
+                using (var vpk = new VPKReader(vpk_path))
                 {
-                     Directory.CreateDirectory(extract_dir); 
-
-                }
-                catch //(Exception ex)
-	            {
-	                MessageBox.Show("Error: (VPK extract) could not create directory: " + extract_dir );
-                    return false;
-	            }
-            }
-
-            StringBuilder shortPath = new StringBuilder(512);
-            GetShortPathName(@extract_dir, shortPath, shortPath.Capacity);
-            @extract_dir = shortPath.ToString();
-
-
-            VPK = '"' + VPK + '"';
-            extract_dir = '"' + extract_dir + '"';
-            filename_export = '"' + filename_export + '"';
-
-
-            string args = " -v -p " + VPK + " -d " + extract_dir + " -e " + filename_export;
-
-            Process proc = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    WorkingDirectory = app_data_dir, // + "team fortress 2\\tf\\",
-                    FileName = tools_dir + "HLExtract.exe",
-                    Arguments = args,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            proc.Start();
-
-            //get process output to check for errors
-            while (!proc.StandardOutput.EndOfStream)
-            {
-                string str = proc.StandardOutput.ReadLine();
-
-
-                if (str.Contains("not found in package"))
-                {
-                    // MessageBox.Show("Error extracting from VPK: file " + file_path + " not found in the VPK!");
+                    if (!vpk.FileExists(file_path)) { return false; }
+                    byte[] data = vpk.ReadFile(file_path);
+                    string out_file = Path.Combine(extract_path, Path.GetFileName(file_path));
+                    File.WriteAllBytes(out_file, data);
+                    return true;
                 }
             }
-
-            //check if file was extracted
-            if (File.Exists(extract_dir + filename))
-            {
-                return true;
-            }
-            else
+            catch
             {
                 return false;
             }
         }
 
 
-        //Validate that file exists in GCF
+        //Validate that a file exists inside one of the TF2 VPK archives
         public static bool Find(string path, int vpk_selection)
         {
+            if (string.IsNullOrEmpty(path)) { return false; }
 
-            #region check if tools files exist
+            string vpk_file = (vpk_selection == 1) ? "tf2_textures_dir.vpk" : "tf2_misc_dir.vpk";
+            string vpk_path = tf_dir + vpk_file;
+            if (!File.Exists(vpk_path)) { return false; }
 
-            if (!File.Exists(tools_dir + "HLExtract.exe"))
+            try
             {
-                MessageBox.Show("Error: tools\\HLExtract.exe is missing! \n Tools are needed to extract from the game VPKs.");
+                using (var vpk = new VPKReader(vpk_path))
+                {
+                    return vpk.FileExists(path);
+                }
+            }
+            catch
+            {
                 return false;
             }
-
-            if (!File.Exists(tools_dir + "HLLib.dll"))
-            {
-                MessageBox.Show("Error: tools\\HLLib.dll is missing!\n Tools are needed to extract from the game VPKs.");
-                return false;
-            }
-
-            #endregion
-
-            string vpk_file = "tf2_misc_dir.vpk";
-            if (vpk_selection == 0) { vpk_file = "tf2_misc_dir.vpk"; } //models, vmts, pcf ...
-            if (vpk_selection == 1) { vpk_file = "tf2_textures_dir.vpk"; } // VTF only
-
-            bool found = false;
-
-            if (path == "")
-            {
-                MessageBox.Show("Error reading from VPK: file path is undefined.");
-                return false;
-            }
-
-
-            string VPK = '"' + tf_dir + vpk_file + '"';
-            string model = '"' + path + '"';
-            string extract_dir = tmp_dir;
-            string args = " -v -p " + VPK + " -t " + model;
-
-            StringBuilder shortPath = new StringBuilder(512);
-            GetShortPathName(@extract_dir, shortPath, shortPath.Capacity);
-            @extract_dir = shortPath.ToString();
-
-            Process proc = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    WorkingDirectory = app_data_dir, // + "team fortress 2\\tf\\",
-                    FileName = tools_dir + "HLExtract.exe",
-                    Arguments = args,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            proc.Start();
-
-            //get process output to check for errors
-            while (!proc.StandardOutput.EndOfStream)
-            {
-                string line = proc.StandardOutput.ReadLine() + "\n";
-
-                if (line.Contains(": OK  "))
-                {
-                    found = true;
-                }
-
-
-                if (line.Contains("Error (0x00000002):"))
-                {
-                    MessageBox.Show("Error: could not access to the VPK file.\n" + VPK);
-                    return false;
-
-                }
-
-            }
-
-            return found;
         }
 
 

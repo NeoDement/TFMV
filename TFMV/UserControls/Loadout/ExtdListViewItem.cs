@@ -17,6 +17,12 @@ namespace TFMV
         public string equip_region { get; set; }
         public bool not_paintable { get; set; }
 
+        // schema "set item tint RGB" — packed 24-bit RGB (R<<16|G<<8|B). Used by
+        // tournament medals that carry a baked-in color. When the user adds the
+        // item, the medal-add path patches the body VMT(s) with this color.
+        public bool has_tint { get; set; }
+        public int tint_rgb_packed { get; set; }
+
         public string workshop_zip_path { get; set; }
 
         public List<string> bodygroups_off { get; set; }

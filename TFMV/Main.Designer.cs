@@ -58,6 +58,7 @@
             this.cb_hlmvplusplus_mode = new System.Windows.Forms.CheckBox();
             this.cb_strict_equip_regions = new System.Windows.Forms.CheckBox();
             this.btn_dl_schema = new System.Windows.Forms.Button();
+            this.cb_disable_normal_maps_on_grey_mats = new System.Windows.Forms.CheckBox();
             this.cb_hlmv_antialias = new System.Windows.Forms.CheckBox();
             this.panel9 = new System.Windows.Forms.Panel();
             this.label15 = new System.Windows.Forms.Label();
@@ -76,7 +77,6 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
             this.btn_recache_schema = new System.Windows.Forms.Button();
-            this.steamGameConfig = new TFMV.SourceEngine.SteamGameConfig();
             this.btn_reset_light = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.btn_lColor = new System.Windows.Forms.Button();
@@ -157,7 +157,6 @@
             this.panel40 = new System.Windows.Forms.Panel();
             this.panel39 = new System.Windows.Forms.Panel();
             this.btn_bg_color1 = new System.Windows.Forms.Button();
-            this.colorPicker_master = new TFMV.PaintColorPicker();
             this.btn_screenshot = new System.Windows.Forms.Button();
             this.panel_Bgcolor1 = new System.Windows.Forms.Panel();
             this.btn_mainModel_material = new System.Windows.Forms.Button();
@@ -173,7 +172,6 @@
             this.label7 = new System.Windows.Forms.Label();
             this.panel19 = new System.Windows.Forms.Panel();
             this.txtb_hlmv_wsize_x = new System.Windows.Forms.TextBox();
-            this.bodygroup_manager_panel = new TFMV.UserControls.Bodygroup_manager();
             this.txtb_hlmv_wsize_y = new System.Windows.Forms.TextBox();
             this.btn_window_scale = new System.Windows.Forms.Button();
             this.panel5 = new System.Windows.Forms.Panel();
@@ -322,6 +320,9 @@
             this.copyZIPPathToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.viewOnTF2WikiToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.colorPicker_master = new TFMV.PaintColorPicker();
+            this.steamGameConfig = new TFMV.SourceEngine.SteamGameConfig();
+            this.bodygroup_manager_panel = new TFMV.UserControls.Bodygroup_manager();
             this.Settings.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numUpDown_screenshot_delay)).BeginInit();
             this.panel20.SuspendLayout();
@@ -422,6 +423,7 @@
             this.Settings.Controls.Add(this.cb_hlmvplusplus_mode);
             this.Settings.Controls.Add(this.cb_strict_equip_regions);
             this.Settings.Controls.Add(this.btn_dl_schema);
+            this.Settings.Controls.Add(this.cb_disable_normal_maps_on_grey_mats);
             this.Settings.Controls.Add(this.cb_hlmv_antialias);
             this.Settings.Controls.Add(this.panel9);
             this.Settings.Controls.Add(this.cb_lodclamps);
@@ -620,6 +622,15 @@
             this.btn_dl_schema.UseVisualStyleBackColor = true;
             this.btn_dl_schema.Click += new System.EventHandler(this.btn_dl_schema_Click_1);
             // 
+            // cb_disable_normal_maps_on_grey_mats
+            // 
+            resources.ApplyResources(this.cb_disable_normal_maps_on_grey_mats, "cb_disable_normal_maps_on_grey_mats");
+            this.cb_disable_normal_maps_on_grey_mats.Checked = true;
+            this.cb_disable_normal_maps_on_grey_mats.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cb_disable_normal_maps_on_grey_mats.Name = "cb_disable_normal_maps_on_grey_mats";
+            this.cb_disable_normal_maps_on_grey_mats.UseVisualStyleBackColor = true;
+            this.cb_disable_normal_maps_on_grey_mats.CheckedChanged += new System.EventHandler(this.cb_disable_normal_maps_on_grey_mats_CheckedChanged);
+            // 
             // cb_hlmv_antialias
             // 
             resources.ApplyResources(this.cb_hlmv_antialias, "cb_hlmv_antialias");
@@ -694,6 +705,7 @@
             // btn_check_updates
             // 
             resources.ApplyResources(this.btn_check_updates, "btn_check_updates");
+            this.btn_check_updates.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(45)))));
             this.btn_check_updates.Name = "btn_check_updates";
             this.btn_check_updates.UseVisualStyleBackColor = true;
             this.btn_check_updates.Click += new System.EventHandler(this.btn_check_updates_Click);
@@ -745,16 +757,6 @@
             this.btn_recache_schema.Name = "btn_recache_schema";
             this.btn_recache_schema.UseVisualStyleBackColor = true;
             this.btn_recache_schema.Click += new System.EventHandler(this.btn_recache_schema_Click);
-            // 
-            // steamGameConfig
-            // 
-            this.steamGameConfig.bin_dir = null;
-            resources.ApplyResources(this.steamGameConfig, "steamGameConfig");
-            this.steamGameConfig.Name = "steamGameConfig";
-            this.steamGameConfig.steam_dir = null;
-            this.steamGameConfig.tf_dir = null;
-            this.steamGameConfig.tf2_dir = null;
-            this.steamGameConfig.Load += new System.EventHandler(this.steamGameConfig_Load);
             // 
             // btn_reset_light
             // 
@@ -1431,19 +1433,6 @@
             this.btn_bg_color1.UseVisualStyleBackColor = true;
             this.btn_bg_color1.Click += new System.EventHandler(this.panel_Bgcolor_Click);
             // 
-            // colorPicker_master
-            // 
-            this.colorPicker_master.BackColor = System.Drawing.Color.LightGray;
-            this.colorPicker_master.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.colorPicker_master.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            resources.ApplyResources(this.colorPicker_master, "colorPicker_master");
-            this.colorPicker_master.FormattingEnabled = true;
-            this.colorPicker_master.Name = "colorPicker_master";
-            this.colorPicker_master.SelectedItem = null;
-            this.colorPicker_master.SelectedValue = System.Drawing.Color.White;
-            this.colorPicker_master.VMT = null;
-            this.colorPicker_master.SelectionChangeCommitted += new System.EventHandler(this.colorPicker1_SelectionChangeCommitted);
-            // 
             // btn_screenshot
             // 
             resources.ApplyResources(this.btn_screenshot, "btn_screenshot");
@@ -1572,12 +1561,6 @@
             this.toolTip1.SetToolTip(this.txtb_hlmv_wsize_x, resources.GetString("txtb_hlmv_wsize_x.ToolTip"));
             this.txtb_hlmv_wsize_x.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBoxNumericSimple_KeyPress);
             this.txtb_hlmv_wsize_x.Leave += new System.EventHandler(this.textbox_text_to_int);
-            // 
-            // bodygroup_manager_panel
-            // 
-            this.bodygroup_manager_panel.BackColor = System.Drawing.Color.Gainsboro;
-            resources.ApplyResources(this.bodygroup_manager_panel, "bodygroup_manager_panel");
-            this.bodygroup_manager_panel.Name = "bodygroup_manager_panel";
             // 
             // txtb_hlmv_wsize_y
             // 
@@ -2877,6 +2860,35 @@
             resources.ApplyResources(this.viewOnTF2WikiToolStripMenuItem, "viewOnTF2WikiToolStripMenuItem");
             this.viewOnTF2WikiToolStripMenuItem.Click += new System.EventHandler(this.viewOnTF2WikiToolStripMenuItem_Click);
             // 
+            // colorPicker_master
+            // 
+            this.colorPicker_master.BackColor = System.Drawing.Color.LightGray;
+            this.colorPicker_master.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.colorPicker_master.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            resources.ApplyResources(this.colorPicker_master, "colorPicker_master");
+            this.colorPicker_master.FormattingEnabled = true;
+            this.colorPicker_master.Name = "colorPicker_master";
+            this.colorPicker_master.SelectedItem = null;
+            this.colorPicker_master.SelectedValue = System.Drawing.Color.White;
+            this.colorPicker_master.VMT = null;
+            this.colorPicker_master.SelectionChangeCommitted += new System.EventHandler(this.colorPicker1_SelectionChangeCommitted);
+            // 
+            // steamGameConfig
+            // 
+            this.steamGameConfig.bin_dir = null;
+            resources.ApplyResources(this.steamGameConfig, "steamGameConfig");
+            this.steamGameConfig.Name = "steamGameConfig";
+            this.steamGameConfig.steam_dir = null;
+            this.steamGameConfig.tf_dir = null;
+            this.steamGameConfig.tf2_dir = null;
+            this.steamGameConfig.Load += new System.EventHandler(this.steamGameConfig_Load);
+            // 
+            // bodygroup_manager_panel
+            // 
+            resources.ApplyResources(this.bodygroup_manager_panel, "bodygroup_manager_panel");
+            this.bodygroup_manager_panel.BackColor = System.Drawing.Color.Gainsboro;
+            this.bodygroup_manager_panel.Name = "bodygroup_manager_panel";
+            // 
             // Main
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -3278,6 +3290,7 @@
         private System.Windows.Forms.LinkLabel linkLabel5;
         private System.Windows.Forms.Panel panel17;
         private System.Windows.Forms.Label label45;
+        private System.Windows.Forms.CheckBox cb_disable_normal_maps_on_grey_mats;
     }
 }
 

@@ -30,6 +30,12 @@ namespace TFMV.TF2
             public string equip_rgn { get; set; }
             public bool not_paintable { get; set; }
 
+            // schema "set item tint RGB" attribute — used by tournament medals that
+            // carry a baked-in color rather than relying on a paint can. Packed as
+            // 24-bit (R<<16 | G<<8 | B) to match the schema's value field.
+            public bool has_tint { get; set; }
+            public int tint_rgb_packed { get; set; }
+
 
 
 

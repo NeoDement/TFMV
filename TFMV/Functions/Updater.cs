@@ -106,34 +106,88 @@ namespace TFMV.Functions
             return new Version(0, 0);
         }
 
-        // Downloads the ZIP to %TEMP%\tfmv_update\, extracts it, and launches TFMV_Updater.exe
+        // Downloads the ZIP to %TEMP%\tfmv_update\, extracts it, and launches TFMV_Updater.exe.
+        // Shows a modal progress dialog during the download so the UI doesn't appear frozen.
         // Returns true if the updater was launched successfully (caller should exit the app).
-        public static bool DownloadAndLaunchUpdater(ReleaseInfo release)
+        public static bool DownloadAndLaunchUpdater(ReleaseInfo release, IWin32Window owner)
         {
+            string tempRoot = Path.Combine(Path.GetTempPath(), "tfmv_update");
+
+            // clear any stale update dir
+            if (Directory.Exists(tempRoot))
+            {
+                try { Directory.Delete(tempRoot, true); } catch { }
+            }
+            Directory.CreateDirectory(tempRoot);
+
+            string zipPath = Path.Combine(tempRoot, release.ZipAssetName ?? "update.zip");
+            string extractDir = Path.Combine(tempRoot, "extracted");
+            Directory.CreateDirectory(extractDir);
+
+            // download with a modal progress dialog
+            Exception downloadError = null;
+            bool downloadOk = false;
+
+            using (var dlg = new TFMV.Forms.UpdateProgressDialog())
+            using (WebClient client = new WebClient())
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                client.Headers.Add("User-Agent", USER_AGENT);
+
+                client.DownloadProgressChanged += (s, e) =>
+                {
+                    dlg.SetProgress(e.ProgressPercentage, e.BytesReceived, e.TotalBytesToReceive);
+                };
+
+                client.DownloadFileCompleted += (s, e) =>
+                {
+                    if (!e.Cancelled && e.Error == null)
+                    {
+                        downloadOk = true;
+                    }
+                    else if (e.Error != null)
+                    {
+                        downloadError = e.Error;
+                    }
+                    dlg.CloseFromBackground();
+                };
+
+                dlg.Cancelled += (s, e) =>
+                {
+                    try { client.CancelAsync(); } catch { }
+                };
+
+                try
+                {
+                    client.DownloadFileAsync(new Uri(release.ZipDownloadUrl), zipPath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        "Failed to start the download:\n\n" + ex.Message,
+                        "Update Error");
+                    try { Directory.Delete(tempRoot, true); } catch { }
+                    return false;
+                }
+
+                dlg.ShowDialog(owner);
+            }
+
+            if (!downloadOk)
+            {
+                try { Directory.Delete(tempRoot, true); } catch { }
+                if (downloadError != null)
+                {
+                    MessageBox.Show(
+                        "Failed to download the update:\n\n" + downloadError.Message,
+                        "Update Error");
+                }
+                return false;
+            }
+
+            // extract + hand off to TFMV_Updater
             try
             {
-                string tempRoot = Path.Combine(Path.GetTempPath(), "tfmv_update");
-
-                // clear any stale update dir
-                if (Directory.Exists(tempRoot))
-                {
-                    try { Directory.Delete(tempRoot, true); } catch { }
-                }
-                Directory.CreateDirectory(tempRoot);
-
-                string zipPath = Path.Combine(tempRoot, release.ZipAssetName ?? "update.zip");
-                string extractDir = Path.Combine(tempRoot, "extracted");
-                Directory.CreateDirectory(extractDir);
-
-                // download
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                using (WebClient client = new WebClient())
-                {
-                    client.Headers.Add("User-Agent", USER_AGENT);
-                    client.DownloadFile(release.ZipDownloadUrl, zipPath);
-                }
-
-                // extract
                 using (ZipFile zip = ZipFile.Read(zipPath))
                 {
                     zip.ExtractAll(extractDir, ExtractExistingFileAction.OverwriteSilently);
@@ -177,7 +231,7 @@ namespace TFMV.Functions
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Failed to download or prepare the update:\n\n" + ex.Message,
+                    "Failed to prepare the update:\n\n" + ex.Message,
                     "Update Error");
                 return false;
             }

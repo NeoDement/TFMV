@@ -1,0 +1,139 @@
+# TFMV bodygroup definitions
+#
+# [classname] opens a section. Inside a section:
+#   name              entry; mask defaults to <class>_<name>.png
+#   name, opt, opt    entry with options (comma-separated key=value pairs)
+#   ---               horizontal divider line in the UI
+#   # comment         full-line or trailing comment
+#
+# Options:
+#   format=bold       render the checkbox in bold (Valve-official bodygroups)
+#   nomask=true       this entry has no body-sheet mask file. Use for
+#                     bodygroups that live on a separate texture sheet
+#                     (heads on *_head_red, medic backpack on medic_backpack_red).
+#   nodraw=<key>      on toggle, also write $no_draw VMTs for any class
+#                     material whose path contains one of <key>'s patterns.
+#                     Additive on top of the mask unless paired with nomask=true.
+
+[scout]
+hat, format=bold
+headphones, format=bold
+shoes_socks, format=bold
+dogtags, format=bold
+---
+head, nomask=true, nodraw=head
+body
+belt
+arms
+hands
+legs
+
+[soldier]
+hat, format=bold
+grenades, format=bold
+---
+head, nomask=true, nodraw=head
+body
+body_lower
+belt
+arms
+hands
+legs
+shoes
+pouches
+
+[pyro]
+head, format=bold
+grenades, format=bold
+backpack, format=bold
+---
+body
+arms
+gloves
+legs
+shoes
+pouch
+backpack_connector
+
+[demo]
+grenades, format=bold
+shoes, format=bold
+---
+head, nomask=true, nodraw=head
+collar
+vest
+arms
+hands
+legs
+pouch_front
+pouch_L
+pouch_R
+flap
+# smile
+
+[engineer]
+hat, format=bold
+leftarm
+---
+head, nomask=true, nodraw=head
+body
+belt
+rightarm
+legs
+shoes
+pouch_R
+pouch
+cable
+
+[heavy]
+hands, format=bold
+bullets, format=bold
+---
+head, nomask=true, nodraw=head
+shirt
+vest
+arms
+belt
+legs
+shoes
+pouch
+
+[medic]
+backpack, format=bold, nomask=true, nodraw=backpack
+---
+head, nomask=true, nodraw=head
+glasses
+body
+coat_lower
+arms
+gloves
+legs
+shoes
+pouch_R
+pouch_rear
+
+[sniper]
+hat, format=bold
+---
+head, nomask=true, nodraw=head
+glasses, nodraw=lens
+body
+upper_arms
+lower_arms
+legs
+shoes
+bullets
+pouch
+quiver
+# darts
+# arrows
+
+[spy]
+head, nomask=true, nodraw=head
+cigarette
+body
+arms
+hands
+legs
+shoes
+# spyMask
