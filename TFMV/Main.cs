@@ -7870,10 +7870,17 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
                 return (search_filepath.ToLower().Replace("/", "\\")).Replace(steamGameConfig.tf_dir.ToLower(), "");
             }
 
+            // workshop ZIPs land their files at outdir + search_filepath via load_tmp_models;
+            // use that copy directly instead of overwriting it with the Valve-shipped VPK version.
+            else if (File.Exists(outdir + search_filepath))
+            {
+                return search_filepath;
+            }
+
             // // VPK FILES // // / if file exists in game's VPKs copy it to outdir
             // TODO select materials/-models // / textures VPK???
 
-            else if (VPK.Extract(search_filepath, Path.GetDirectoryName(outdir + search_filepath), 0) == false) // extract it from the vpk
+            else if (VPK.Extract(search_filepath, Path.GetDirectoryName(outdir + search_filepath), 0)) // extract it from the vpk
             {
                 return search_filepath;
             }
