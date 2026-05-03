@@ -1,13 +1,42 @@
-# TFMV Neo 0.7
-Team Fortress 2 Model Viewer
+# TFMV Neo 2026.1
+Team Fortress 2 Model Viewer (NeoDement's fork)
 
 DOWNLOAD HERE: https://github.com/NeoDement/TFMV/releases
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
+_______________________________________________________________________________________________________________________
 
 PATCH NOTES:
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
+_______________________________________________________________________________________________________________________
+
+   2026.1 (05/03/2026)
+_______________________________________________________________________________________________________________________
+
+-Item data is now read directly from your local TF2 installation, replacing the old schema download system.
+
+-Added an auto-update system. When a new version of TFMV is released, the program will now prompt you to download it.
+
+-Improved bodygroup override system. Added many extra faux bodygroups, useful for creating backpack icons.
+
+-Improved grey/"doll" textures for classes. Added a settings checkbox to toggle normal maps on/off in grey mode.
+
+-Added support for items which override their default paint value in the schema (some medals).
+
+-Improved Steam/TF Directory detection.
+
+-Introduced a new version numbering system to make it easier to tell at a glance when TFMV is out of date.
+
+-Renamed the Updates tab to About.
+
+-Fixed Camera Position, Camera Rotation and Light Rotation inputs not correctly saving decimal numbers (thanks That Hat Guy!)
+
+-Fixed an extra "Loadout to HLMV" button appearing when the Items panel is expanded (thanks That Hat Guy!)
+
+-Fixed an edge case where the Window size input accepted decimal numbers.
+
+
+_______________________________________________________________________________________________________________________
+
 
    0.7 (02/24/2025)
 _______________________________________________________________________________________________________________________
