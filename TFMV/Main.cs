@@ -707,29 +707,24 @@ namespace TFMV
 
         #region auto-update
 
-        // The user can pick "Skip This Version" to suppress the startup nag for one specific
-        // release tag. Stored as a single-line file in config/ so it survives updates (config
-        // is a preserved folder in the updater).
-        private static string skipped_version_file_path()
+        // Diagnostic log for the silent (startup) update check. Helps diagnose cases where the
+        // startup check fails silently (cold-start TLS, asset upload race on a freshly published
+        // release, etc.). DEBUG-only: [Conditional("DEBUG")] strips every call to log_update_check
+        // out of Release builds at compile time, so no log file is ever created on user machines.
+        private static string update_check_log_path()
         {
-            return Path.Combine(Application.StartupPath, "config", "skipped_version.txt");
+            return Path.Combine(Application.StartupPath, "config", "update_check.log");
         }
 
-        private static string read_skipped_version()
+        [Conditional("DEBUG")]
+        private static void log_update_check(string message)
         {
-            string path = skipped_version_file_path();
-            if (!File.Exists(path)) return null;
-            try { return File.ReadAllText(path).Trim(); }
-            catch { return null; }
-        }
-
-        private static void write_skipped_version(string tag)
-        {
-            string path = skipped_version_file_path();
             try
             {
+                string path = update_check_log_path();
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllText(path, tag ?? "");
+                string line = "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] " + message + Environment.NewLine;
+                File.AppendAllText(path, line);
             }
             catch { /* best-effort */ }
         }
@@ -752,15 +747,31 @@ namespace TFMV
         // force=true: always show the update dialog (test mode)
         private void run_update_check(bool silent, bool force)
         {
+            if (silent)
+            {
+                log_update_check("startup check: starting (current=" + Functions.Updater.GetCurrentVersion() + ")");
+            }
+
             var worker = new BackgroundWorker();
-            worker.DoWork += (s, ev) => { ev.Result = Functions.Updater.FetchLatestRelease(); };
+            worker.DoWork += (s, ev) =>
+            {
+                string failureReason;
+                Functions.Updater.ReleaseInfo result = Functions.Updater.FetchLatestRelease(out failureReason);
+                ev.Result = new Tuple<Functions.Updater.ReleaseInfo, string>(result, failureReason);
+            };
             worker.RunWorkerCompleted += (s, ev) =>
             {
-                Functions.Updater.ReleaseInfo release = ev.Result as Functions.Updater.ReleaseInfo;
+                var pair = ev.Result as Tuple<Functions.Updater.ReleaseInfo, string>;
+                Functions.Updater.ReleaseInfo release = pair != null ? pair.Item1 : null;
+                string failureReason = pair != null ? pair.Item2 : null;
 
                 if (release == null)
                 {
-                    if (!silent)
+                    if (silent)
+                    {
+                        log_update_check("startup check: fetch failed - " + (failureReason ?? "unknown"));
+                    }
+                    else
                     {
                         MessageBox.Show("Could not check for updates. Please try again later.", "Update Check Failed");
                     }
@@ -770,22 +781,20 @@ namespace TFMV
                 Version current = Functions.Updater.GetCurrentVersion();
                 if (!force && release.RemoteVersion <= current)
                 {
-                    if (!silent)
+                    if (silent)
+                    {
+                        log_update_check("startup check: no update available (current=" + current + ", remote=" + release.RemoteVersion + ")");
+                    }
+                    else
                     {
                         MessageBox.Show("You are running the latest version of TFMV (" + current + ").", "No Updates Available");
                     }
                     return;
                 }
 
-                // honor "Skip This Version" only on silent (startup) checks. Manual checks and
-                // the test-mode button always show the dialog so the user can change their mind.
-                if (silent && !force)
+                if (silent)
                 {
-                    string skipped = read_skipped_version();
-                    if (!string.IsNullOrEmpty(skipped) && string.Equals(skipped, release.TagName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return;
-                    }
+                    log_update_check("startup check: prompting for update (current=" + current + ", remote=" + release.RemoteVersion + ", tag=" + release.TagName + ")");
                 }
 
                 prompt_and_apply_update(release, current);
@@ -795,9 +804,18 @@ namespace TFMV
 
         private void prompt_and_apply_update(Functions.Updater.ReleaseInfo release, Version current)
         {
-            using (var dlg = new TFMV.Forms.UpdateDialog(current, release.TagName, release.Body))
+            using (var dlg = new TFMV.Forms.UpdateDialog(
+                current, release.TagName, release.Body,
+                cb_check_updates_on_startup.Checked))
             {
                 dlg.ShowDialog(this);
+
+                // Mirror the dialog's checkbox back to the Settings-tab checkbox.
+                // Setting .Checked fires CheckedChanged → settings_save, persisting to settings.ini.
+                if (cb_check_updates_on_startup.Checked != dlg.CheckOnStartup)
+                {
+                    cb_check_updates_on_startup.Checked = dlg.CheckOnStartup;
+                }
 
                 if (dlg.Result == TFMV.Forms.UpdateDialog.UpdateDialogResult.Download)
                 {
@@ -805,35 +823,6 @@ namespace TFMV
                     {
                         // updater is running; quit ourselves so it can replace our files
                         Application.Exit();
-                    }
-                }
-                else if (dlg.Result == TFMV.Forms.UpdateDialog.UpdateDialogResult.Skip)
-                {
-                    write_skipped_version(release.TagName);
-
-                    MessageBox.Show(
-                        this,
-                        "You won't be prompted to update to TFMV " + release.TagName + " again. " +
-                        "The next release will still trigger an update prompt as usual.\n\n" +
-                        "If you change your mind, you can grab this version manually at:\n" +
-                        "https://github.com/NeoDement/TFMV/releases",
-                        "Update Skipped",
-                        MessageBoxButtons.OK);
-                }
-                else
-                {
-                    // user picked "Not Now" — offer to disable future update notifications
-                    if (cb_check_updates_on_startup.Checked)
-                    {
-                        DialogResult r = MessageBox.Show(
-                            "Do you want to stop checking for updates on startup?\n\n" +
-                            "You can always check manually with the 'Check for updates' button in Settings.",
-                            "Disable update check?",
-                            MessageBoxButtons.YesNo);
-                        if (r == DialogResult.Yes)
-                        {
-                            cb_check_updates_on_startup.Checked = false; // this triggers settings_save via CheckedChanged
-                        }
                     }
                 }
             }
@@ -872,14 +861,6 @@ namespace TFMV
 
             this.BringToFront();
 
-            // kick off auto-update check in the background (if enabled)
-            if (cb_check_updates_on_startup.Checked)
-            {
-                run_update_check(silent: true, force: false);
-            }
-
-
-
             #region custom mods / disable mods
 
             //neodement: todo: disable confusing wordy "disable mods?" popup. rename custom TFMV dir to !TFMV dir before you commit this.
@@ -896,6 +877,14 @@ namespace TFMV
             }
 
             #endregion
+
+            // kick off auto-update check in the background (if enabled).
+            // deliberately runs after the "disable custom mods?" prompt so the two dialogs
+            // can't appear on screen at the same time.
+            if (cb_check_updates_on_startup.Checked)
+            {
+                run_update_check(silent: true, force: false);
+            }
 
             #region install TFMV mods
 

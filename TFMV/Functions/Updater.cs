@@ -24,9 +24,11 @@ namespace TFMV.Functions
             public string ZipAssetName;
         }
 
-        // Fetch latest release metadata. Returns null if network fails or parse fails.
-        public static ReleaseInfo FetchLatestRelease()
+        // Fetch latest release metadata. Returns null if network fails or parse fails;
+        // failureReason is set to a short human-readable description in that case.
+        public static ReleaseInfo FetchLatestRelease(out string failureReason)
         {
+            failureReason = null;
             try
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -42,7 +44,11 @@ namespace TFMV.Functions
                     serializer.MaxJsonLength = 10 * 1024 * 1024;
                     var data = serializer.Deserialize<Dictionary<string, object>>(json);
 
-                    if (data == null) return null;
+                    if (data == null)
+                    {
+                        failureReason = "JSON deserialize returned null";
+                        return null;
+                    }
 
                     string tagName = data.ContainsKey("tag_name") ? (data["tag_name"] as string) ?? "" : "";
                     string body = data.ContainsKey("body") ? (data["body"] as string) ?? "" : "";
@@ -51,7 +57,11 @@ namespace TFMV.Functions
                     string versionString = tagName.TrimStart('v', 'V').Trim();
 
                     Version remoteVer;
-                    if (!Version.TryParse(versionString, out remoteVer)) return null;
+                    if (!Version.TryParse(versionString, out remoteVer))
+                    {
+                        failureReason = "could not parse version from tag '" + tagName + "'";
+                        return null;
+                    }
 
                     // find first .zip asset
                     string zipUrl = null;
@@ -78,7 +88,11 @@ namespace TFMV.Functions
                         }
                     }
 
-                    if (string.IsNullOrEmpty(zipUrl)) return null;
+                    if (string.IsNullOrEmpty(zipUrl))
+                    {
+                        failureReason = "no .zip asset attached to release '" + tagName + "'";
+                        return null;
+                    }
 
                     return new ReleaseInfo
                     {
@@ -93,6 +107,7 @@ namespace TFMV.Functions
             catch (Exception ex)
             {
                 Debug.WriteLine("[Updater] FetchLatestRelease failed: " + ex.Message);
+                failureReason = ex.GetType().Name + ": " + ex.Message;
                 return null;
             }
         }

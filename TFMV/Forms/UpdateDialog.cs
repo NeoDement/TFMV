@@ -5,11 +5,15 @@ namespace TFMV.Forms
 {
     public partial class UpdateDialog : Form
     {
-        public enum UpdateDialogResult { Download, Skip, Later }
+        public enum UpdateDialogResult { Download, Later }
 
         public UpdateDialogResult Result { get; private set; } = UpdateDialogResult.Later;
 
-        public UpdateDialog(Version currentVersion, string remoteTag, string releaseNotes)
+        // Final state of the "Check for updates on startup" checkbox at dialog close.
+        // Mirrors the Settings-tab checkbox of the same name; caller writes it back.
+        public bool CheckOnStartup { get { return cbCheckOnStartup.Checked; } }
+
+        public UpdateDialog(Version currentVersion, string remoteTag, string releaseNotes, bool checkOnStartupInitial)
         {
             InitializeComponent();
 
@@ -21,16 +25,11 @@ namespace TFMV.Forms
                 ? "(no release notes provided)"
                 : releaseNotes.Replace("\n", "\r\n").Replace("\r\r\n", "\r\n");
 
+            cbCheckOnStartup.Checked = checkOnStartupInitial;
+
             btnDownload.Click += (s, e) =>
             {
                 Result = UpdateDialogResult.Download;
-                this.DialogResult = DialogResult.OK;
-                this.Close();
-            };
-
-            btnSkip.Click += (s, e) =>
-            {
-                Result = UpdateDialogResult.Skip;
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             };

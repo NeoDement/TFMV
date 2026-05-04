@@ -700,6 +700,8 @@
             // cb_check_updates_on_startup
             // 
             resources.ApplyResources(this.cb_check_updates_on_startup, "cb_check_updates_on_startup");
+            this.cb_check_updates_on_startup.Checked = true;
+            this.cb_check_updates_on_startup.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cb_check_updates_on_startup.Name = "cb_check_updates_on_startup";
             this.cb_check_updates_on_startup.UseVisualStyleBackColor = true;
             this.cb_check_updates_on_startup.CheckedChanged += new System.EventHandler(this.settings_save);

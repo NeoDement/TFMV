@@ -33,8 +33,8 @@ namespace TFMV.Forms
             this.versionsLabel = new System.Windows.Forms.Label();
             this.notesBox = new System.Windows.Forms.TextBox();
             this.btnDownload = new System.Windows.Forms.Button();
-            this.btnSkip = new System.Windows.Forms.Button();
             this.btnLater = new System.Windows.Forms.Button();
+            this.cbCheckOnStartup = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // header
@@ -71,23 +71,12 @@ namespace TFMV.Forms
             //
             this.btnDownload.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDownload.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(45)))));
-            this.btnDownload.Location = new System.Drawing.Point(383, 359);
+            this.btnDownload.Location = new System.Drawing.Point(515, 359);
             this.btnDownload.Name = "btnDownload";
             this.btnDownload.Size = new System.Drawing.Size(120, 28);
             this.btnDownload.TabIndex = 4;
             this.btnDownload.Text = "Download Update";
             this.btnDownload.UseVisualStyleBackColor = true;
-            //
-            // btnSkip
-            //
-            this.btnSkip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnSkip.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(45)))));
-            this.btnSkip.Location = new System.Drawing.Point(511, 359);
-            this.btnSkip.Name = "btnSkip";
-            this.btnSkip.Size = new System.Drawing.Size(130, 28);
-            this.btnSkip.TabIndex = 5;
-            this.btnSkip.Text = "Skip This Version";
-            this.btnSkip.UseVisualStyleBackColor = true;
             //
             // btnLater
             //
@@ -100,6 +89,17 @@ namespace TFMV.Forms
             this.btnLater.TabIndex = 6;
             this.btnLater.Text = "Not Now";
             this.btnLater.UseVisualStyleBackColor = true;
+            //
+            // cbCheckOnStartup
+            //
+            this.cbCheckOnStartup.AutoSize = true;
+            this.cbCheckOnStartup.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cbCheckOnStartup.Location = new System.Drawing.Point(16, 365);
+            this.cbCheckOnStartup.Name = "cbCheckOnStartup";
+            this.cbCheckOnStartup.Size = new System.Drawing.Size(163, 17);
+            this.cbCheckOnStartup.TabIndex = 5;
+            this.cbCheckOnStartup.Text = "Check for updates on startup";
+            this.cbCheckOnStartup.UseVisualStyleBackColor = true;
             // 
             // UpdateDialog
             // 
@@ -109,8 +109,8 @@ namespace TFMV.Forms
             this.BackColor = System.Drawing.Color.Gainsboro;
             this.CancelButton = this.btnLater;
             this.ClientSize = new System.Drawing.Size(770, 398);
+            this.Controls.Add(this.cbCheckOnStartup);
             this.Controls.Add(this.btnLater);
-            this.Controls.Add(this.btnSkip);
             this.Controls.Add(this.btnDownload);
             this.Controls.Add(this.notesBox);
             this.Controls.Add(this.versionsLabel);
@@ -133,7 +133,7 @@ namespace TFMV.Forms
         private System.Windows.Forms.Label versionsLabel;
         private System.Windows.Forms.TextBox notesBox;
         private System.Windows.Forms.Button btnDownload;
-        private System.Windows.Forms.Button btnSkip;
         private System.Windows.Forms.Button btnLater;
+        private System.Windows.Forms.CheckBox cbCheckOnStartup;
     }
 }
