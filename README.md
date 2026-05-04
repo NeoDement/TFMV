@@ -1,4 +1,4 @@
-# TFMV Neo 2026.1
+# TFMV Neo 2026.2
 Team Fortress 2 Model Viewer (NeoDement's fork)
 
 DOWNLOAD HERE: https://github.com/NeoDement/TFMV/releases
@@ -6,6 +6,16 @@ DOWNLOAD HERE: https://github.com/NeoDement/TFMV/releases
 _______________________________________________________________________________________________________________________
 
 PATCH NOTES:
+
+_______________________________________________________________________________________________________________________
+
+   2026.2 (05/04/2026)
+_______________________________________________________________________________________________________________________
+
+-Fixed mislabelled Engineer bodygroups.
+
+-Added a checkbox (on by default) for fixing blurry head textures in HLMV mode. Removed the option for HLMV++ mode, which fixes it more properly.
+
 
 _______________________________________________________________________________________________________________________
 
