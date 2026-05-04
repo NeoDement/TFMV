@@ -656,9 +656,11 @@
             // cb_lodclamps
             // 
             resources.ApplyResources(this.cb_lodclamps, "cb_lodclamps");
+            this.cb_lodclamps.Checked = true;
+            this.cb_lodclamps.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cb_lodclamps.Name = "cb_lodclamps";
             this.cb_lodclamps.UseVisualStyleBackColor = true;
-            this.cb_lodclamps.CheckedChanged += new System.EventHandler(this.cb_hwm_CheckedChanged);
+            this.cb_lodclamps.CheckedChanged += new System.EventHandler(this.cb_lodclamps_CheckedChanged);
             // 
             // cb_hwm
             // 

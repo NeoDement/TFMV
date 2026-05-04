@@ -527,17 +527,11 @@ namespace TFMV
 
 
 
-            //hlmv++ workaround
-
-            //if hlmv++ mode becomes checked, disable the helper bones thing. hlmv++ fixes it properly.
-
-            //slightly different from the code that runs when you actually check/uncheck the box.
-            //this one leaves in whatever state it was in instead of assuming you always want it enabled if not using hlmv++ mode.
+            // hide HLMV++-irrelevant options while HLMV++ mode is on; their saved state is preserved
             if (cb_hlmvplusplus_mode.Checked)
             {
-                cb_fix_hlp_bones.Checked = false;
-                cb_fix_hlp_bones.Enabled = false;
                 cb_fix_hlp_bones.Visible = false;
+                cb_lodclamps.Visible = false;
             }
 
 
@@ -3077,6 +3071,12 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
             // reset loadout
             btn_reset_loadout_Click(null, EventArgs.Empty);
+        }
+
+        // fix LOD UV clamps on head VTFs when checked // checkbox event
+        private void cb_lodclamps_CheckedChanged(object sender, EventArgs e)
+        {
+            settings_save(sender, e);
         }
 
         // omit $bumpmap from grey-mode VMTs when checked // checkbox event
@@ -8223,8 +8223,8 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
             }
 
 
-            // fix wrist bug
-            if (cb_fix_hlp_bones.Checked)
+            // fix wrist bug (skipped in HLMV++ mode — HLMV++ handles it)
+            if (cb_fix_hlp_bones.Checked && !cb_hlmvplusplus_mode.Checked)
             {
                 mdl_disable_hlp_bones(tfmv_dir + txtb_main_model.Text);
             }
@@ -8311,26 +8311,22 @@ save listbox as cache, effectively deleting anything that isn't in the folder an
 
 
 
-            //neodement: extract head texture from vpk and apply lod fix
+            //neodement: extract head texture from vpk and apply lod fix (skipped in HLMV++ mode — HLMV++ handles it)
 
-
-            miscFunc.create_missing_dir(tfmv_dir + "materials\\" + get_player_path_by_class(selected_player_class));
-
-            //TODO: by next release! make fixing head textures optional (but on by default)
-            //if (cb_lodclamps.Checked)
-            //{
-            if (selected_player_class == "spy")
+            if (cb_lodclamps.Checked && !cb_hlmvplusplus_mode.Checked)
             {
+                miscFunc.create_missing_dir(tfmv_dir + "materials\\" + get_player_path_by_class(selected_player_class));
 
-                vtf_fix_lod_uv_clamps(get_player_path_by_class(selected_player_class), selected_player_class + "_head_red.vtf");
-                vtf_fix_lod_uv_clamps(get_player_path_by_class(selected_player_class), selected_player_class + "_head_blue.vtf");
+                if (selected_player_class == "spy")
+                {
+                    vtf_fix_lod_uv_clamps(get_player_path_by_class(selected_player_class), selected_player_class + "_head_red.vtf");
+                    vtf_fix_lod_uv_clamps(get_player_path_by_class(selected_player_class), selected_player_class + "_head_blue.vtf");
+                }
+                else if (selected_player_class != "pyro")
+                {
+                    vtf_fix_lod_uv_clamps(get_player_path_by_class(selected_player_class), selected_player_class + "_head.vtf");
+                }
             }
-            else if (selected_player_class != "pyro")
-            {
-                vtf_fix_lod_uv_clamps(get_player_path_by_class(selected_player_class), selected_player_class + "_head.vtf");
-            }
-
-            //}
 
             reg_create_hlmv_model(tfmv_dir.Replace(":", ".") + mdlpath);
 
@@ -13054,15 +13050,11 @@ End Class
         {
             settings_save(sender, e);
 
-            //if hlmv++ mode becomes checked, disable the helper bones thing. hlmv++ fixes it properly.
+            //hide HLMV++-irrelevant options; their saved state and side effects are preserved.
             if (cb_hlmvplusplus_mode.Checked)
             {
-                cb_fix_hlp_bones.Checked = false;
-                cb_fix_hlp_bones.Enabled = false;
                 cb_fix_hlp_bones.Visible = false;
-
-                //cb_screenshot_transparency.Checked = false;
-                //cb_screenshot_transparency.Enabled = false;
+                cb_lodclamps.Visible = false;
 
                 if (cb_screenshot_transparency.Checked && tabControl.SelectedTab == Settings)
                 {
@@ -13077,11 +13069,8 @@ End Class
             }
             else
             {
-                cb_fix_hlp_bones.Checked = true;
-                cb_fix_hlp_bones.Enabled = true;
                 cb_fix_hlp_bones.Visible = true;
-
-                //cb_screenshot_transparency.Enabled = true;
+                cb_lodclamps.Visible = true;
 
                 if (Process_IsRunning(proc_HLMV))
                 {

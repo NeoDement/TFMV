@@ -73,16 +73,16 @@ flap
 
 [engineer]
 hat, format=bold
-leftarm
+rightarm, format=bold
 ---
 head, nomask=true, nodraw=head
 body
 belt
-rightarm
+leftarm
 legs
 shoes
-pouch_R
 pouch
+pouch_R
 cable
 
 [heavy]
