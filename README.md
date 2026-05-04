@@ -12,6 +12,8 @@ ________________________________________________________________________________
    2026.2 (05/04/2026)
 _______________________________________________________________________________________________________________________
 
+-Replaced "Check for updates" button with a "Check for updates on startup" checkbox (on by default).
+
 -Fixed mislabelled Engineer bodygroups.
 
 -Added a checkbox (on by default) for fixing blurry head textures in HLMV mode. Removed the option for HLMV++ mode, which fixes it more properly.
